@@ -36,13 +36,27 @@ impl VerbPlugin for ShowVerb {
             return Ok(());
         }
 
-        let head_hash = fs::read_to_string(&head_path)?;
+        let head_content = fs::read_to_string(&head_path)?;
+        let (head_hash, branch_name) = if head_content.starts_with("ref: ") {
+            let ref_path = head_content.trim_start_matches("ref: ").trim();
+            let hash = fs::read_to_string(format!("{}/{}", ctx.repo_path, ref_path))?;
+            (
+                hash.trim().to_string(),
+                Some(ref_path.replace("refs/heads/", "")),
+            )
+        } else {
+            (head_content.trim().to_string(), None)
+        };
+
         let commit_data = store
             .get(head_hash.as_bytes())?
-            .ok_or_else(|| anyhow!("HEAD commit'i veritabanında bulunamadı."))?;
+            .ok_or_else(|| anyhow!("Commit veritabanında bulunamadı: {}", head_hash))?;
 
         let commit: Commit = serde_json::from_slice(&commit_data)?;
 
+        if let Some(bn) = branch_name {
+            println!("Dal: {}", bn);
+        }
         println!("Son Commit: {}", head_hash);
         println!("Yazar: {}", commit.author);
         println!("Mesaj: {}", commit.message);

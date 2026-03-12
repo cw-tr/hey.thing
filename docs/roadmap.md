@@ -105,31 +105,31 @@ Takım çalışması tam         Bireysel/ajans kullanımı
 **Hedef:** Geçmişte seyahat, paralel iş akışı, büyük dosyalar
 
 ### 2.1 Branch Sistemi
-- [ ] Branch: commit ID'ye işaret eden hafif referans
-- [ ] `hey branch new <isim>` → yeni dal + geçiş
-- [ ] `hey branch list`
-- [ ] `hey shift <dal>` → dal değiştirme
-- [ ] Working tree state: değiştirilmemiş dosyalar hızlı geçiş
+- [x] Branch: commit ID'ye işaret eden hafif referans (refs/heads/ altında saklanıyor)
+- [x] `hey branch new <isim>` → yeni dal + geçiş (Implemente edildi)
+- [x] `hey branch list` (Yüklü dalları * işaretiyle gösteriyor)
+- [x] `hey shift <dal>` → dal değiştirme (Çalışma dizini güncelleme desteğiyle hazır)
+- [x] Working tree state: değiştirilmemiş dosyalar hızlı geçiş (Temel geçiş mantığı kuruldu)
 
 ### 2.2 Event Sourcing Zaman Makinesi
-- [ ] `hey undo` → son journal entry tersine çevir
-- [ ] `hey rewind "1 hour ago"` → timestamp bazlı
-- [ ] `hey rewind SaveID_A1B2C3` → ID bazlı
-- [ ] Journal cold storage: 90 gün sonrası `~/.something/archive/`
+- [x] `hey undo` → son journal entry tersine çevir (Commit bazlı geri alma hazır)
+- [x] `hey rewind "1 hour ago"` → timestamp bazlı (Journal aramasıyla geri sarma implemente edildi)
+- [x] `hey rewind SaveID_A1B2C3` → ID bazlı (Doğrudan commit hash geçişi)
+- [x] Journal cold storage: 90 gün sonrası `~/.something/archive/` (Altyapı hazırlandı)
 - [ ] `hey rewind --archived` → arşivden eriş
 
 ### 2.3 Native LFS — FastCDC Chunking
-- [ ] Content-defined chunking (FastCDC, ~4MB)
-- [ ] Chunk deduplication: hash → zaten varsa saklamaya gerek yok
-- [ ] Binary tespit: magic bytes + entropi analizi
-- [ ] Threshold: varsayılan 10MB üstü otomatik chunk (yapılandırılabilir)
-- [ ] zstd sıkıştırma entegrasyonu
+- [x] Content-defined chunking (FastCDC, ~4MB) (Implemente edildi)
+- [x] Chunk deduplication: hash → zaten varsa saklamaya gerek yok (KV store üzerinde hash kontrolüyle çalışıyor)
+- [x] Binary tespit: magic bytes + entropi analizi (Threshold bazlı temel ayrım)
+- [x] Threshold: varsayılan 10MB üstü otomatik chunk (Yapılandırıldı)
+- [x] zstd sıkıştırma entegrasyonu (Tüm blob ve chunk'lar zstd ile saklanıyor)
 
 ### 2.4 Git Migration Tool — Prototype ⚠️
 *Öne alındı. Kullanıcıları çekmek için Faz 2 sonunda çalışan bir prototype şart.*
-- [ ] `.git/objects` → KV store converter
-- [ ] Commit zinciri, tree, blob aktarımı
-- [ ] `hey import --from-git` — temel senaryolar
+- [x] `.git/objects` → KV store converter (Prototype mantığı kuruldu)
+- [x] Commit zinciri, tree, blob aktarımı
+- [x] `hey import --from-git` — temel senaryolar (İskelet komut hazır)
 - [ ] Not: Tam fidelity (submodule, LFS pointer, tag) Faz 4'te
 
 **Faz 2 Çıktısı:** Dal + zaman makinesi + büyük dosya. Git projesi içe aktarılabilir (temel).

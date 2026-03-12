@@ -33,4 +33,21 @@ impl Journal {
         writeln!(file, "{}", json)?;
         Ok(())
     }
+
+    pub fn read_all() -> Result<Vec<JournalEntry>> {
+        let path = ".something/journal";
+        if !std::path::Path::new(path).exists() {
+            return Ok(Vec::new());
+        }
+
+        let content = std::fs::read_to_string(path)?;
+        let mut entries = Vec::new();
+        for line in content.lines() {
+            if !line.trim().is_empty() {
+                let entry: JournalEntry = serde_json::from_str(line)?;
+                entries.push(entry);
+            }
+        }
+        Ok(entries)
+    }
 }

@@ -32,4 +32,6 @@ pub struct TreeEntry {
     pub name: String,
     pub hash: String,
     pub is_dir: bool,
+    pub is_chunked: bool,
+    pub chunks: Option<Vec<String>>,
 }
