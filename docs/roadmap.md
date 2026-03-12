@@ -94,7 +94,7 @@ Takım çalışması tam         Bireysel/ajans kullanımı
 - [x] TOML parser (toml-rs entegrasyonu tamamlandı)
 - [x] `auto_stage_all`, `ignore_empty_commits` ayarları (Config struct içinde hazır)
 - [x] `trusted_config_hash` kontrolü: klonlanan repo hook'ları devre dışı (SecurityConfig + compute_hash + is_trusted implemente edildi)
-- [ ] `hey setup trust` → bilinçli onay akışı (Config.mark_trusted() hazır, CLI komutu henüz yok)
+- [x] `hey setup trust` → bilinçli onay akışı (SetupVerb komutu eklendi ve test edildi)
 
 **Faz 1 Çıktısı:** `hey init` → `hey save` → `hey show` çalışıyor.
 
