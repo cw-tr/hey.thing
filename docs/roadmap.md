@@ -64,8 +64,8 @@ Takım çalışması tam         Bireysel/ajans kullanımı
 - [x] `~/.something/` kurulum dizini standardı (proje ve global config dizinleri belirlendi)
 
 ### 1.2 `hey.thing` Binary — Modüler Verb Mimarisi
-- [x] `VerbPlugin` trait: `name()`, `aliases()`, `run(ctx, args)`, `help()` — `core/verb_plugin.rs` (anyhow Result desteğiyle src/core/verb_plugin.rs içinde hazır)
-- [x] `VerbRegistry`: startup'ta `~/.something/verbs/` tarar, bulunan her `*.thing`'i yükler (built-in dispatcher ve alias desteği ile src/plugins/verb_registry.rs içinde)
+- [x] `VerbPlugin` trait: `name()`, `run(ctx, args)`, `help()` — `core/verb_plugin.rs` (anyhow Result desteğiyle hazır, alias desteği kaldırıldı)
+- [x] `VerbRegistry`: built-in verb dispatch (src/plugins/verb_registry.rs — harici `*.thing` tarama henüz yok)
 - [x] `PROTECTED` listesi: `save`, `shift`, `sync`, `undo`, `rewind`, `show`, `init`, `get`, `branch`, `import`, `verb`, `plugin`, `help` — üzerine yazılamaz (VerbRegistry içinde güvenlik kontrolü eklendi)
 - [x] Built-in verb'leri `verbs/` dizinine taşı: `save.thing`, `shift.thing`, `sync.thing`, ... (src/cmd/ altında modüler yapıya alındı)
 - [x] `VerbRegistry::find(name)` → `Some(verb)` veya `None` → otomatik help listesi (alias desteğiyle birlikte dispatch ediyor)
@@ -81,9 +81,9 @@ Takım çalışması tam         Bireysel/ajans kullanımı
 
 ### 1.4 Commit Modeli + Event Journal (`core/`)
 - [x] Commit nesnesi: parent_id, tree_hash, author, timestamp, message (src/core/object_model.rs içinde)
-- [x] Merkle Tree zinciri doğrulaması (verify_integrity metodu ile temel doğrulama eklendi)
+- [x] Merkle Tree zinciri doğrulaması (verify_integrity metodu — temel hash karşılaştırma)
 - [x] Journal taslağı: `[timestamp] ACTION {json}` append-only log (.something/journal JSON log sistemi kuruldu)
-- [x] **Journal pruning:** varsayılan 90 gün, `~/.something/` cold storage (Arşivleme altyapısı Journal struct içinde hazırlandı)
+- [x] **Journal pruning:** varsayılan 90 gün, `~/.something/` cold storage (prune + archive implemente edildi)
 
 ### 1.5 İlk CLI Komutları
 - [x] `hey init` → `.something` dizini ve KV oluştur, `.configthing` şablonu yaz (.something dizini ve .configthing oluşturma başarılı)
@@ -93,8 +93,8 @@ Takım çalışması tam         Bireysel/ajans kullanımı
 ### 1.6 `.configthing` + Hook Güvenliği
 - [x] TOML parser (toml-rs entegrasyonu tamamlandı)
 - [x] `auto_stage_all`, `ignore_empty_commits` ayarları (Config struct içinde hazır)
-- [x] `trusted_config_hash` kontrolü: klonlanan repo hook'ları devre dışı (Config yapısında güvenlik alanı tanımlandı)
-- [x] `hey setup trust` → bilinçli onay akışı (Mekanizma iskeleti VerbRegistry'ye entegre edildi)
+- [x] `trusted_config_hash` kontrolü: klonlanan repo hook'ları devre dışı (SecurityConfig + compute_hash + is_trusted implemente edildi)
+- [ ] `hey setup trust` → bilinçli onay akışı (Config.mark_trusted() hazır, CLI komutu henüz yok)
 
 **Faz 1 Çıktısı:** `hey init` → `hey save` → `hey show` çalışıyor.
 
@@ -115,21 +115,21 @@ Takım çalışması tam         Bireysel/ajans kullanımı
 - [x] `hey undo` → son journal entry tersine çevir (Commit bazlı geri alma hazır)
 - [x] `hey rewind "1 hour ago"` → timestamp bazlı (Journal aramasıyla geri sarma implemente edildi)
 - [x] `hey rewind SaveID_A1B2C3` → ID bazlı (Doğrudan commit hash geçişi)
-- [x] Journal cold storage: 90 gün sonrası `~/.something/archive/` (Altyapı hazırlandı)
-- [ ] `hey rewind --archived` → arşivden eriş
+- [x] Journal cold storage: 90 gün sonrası `~/.something/archive/` (prune + list_archives + read_all_archived)
+- [x] `hey rewind --archived` → arşivden eriş (arşiv kaynaklarından arama desteği eklendi)
 
 ### 2.3 Native LFS — FastCDC Chunking
 - [x] Content-defined chunking (FastCDC, ~4MB) (Implemente edildi)
 - [x] Chunk deduplication: hash → zaten varsa saklamaya gerek yok (KV store üzerinde hash kontrolüyle çalışıyor)
-- [x] Binary tespit: magic bytes + entropi analizi (Threshold bazlı temel ayrım)
+- [x] Binary tespit: magic bytes + entropi analizi (20+ format magic bytes + Shannon entropy > 7.0 + null byte kontrolü)
 - [x] Threshold: varsayılan 10MB üstü otomatik chunk (Yapılandırıldı)
 - [x] zstd sıkıştırma entegrasyonu (Tüm blob ve chunk'lar zstd ile saklanıyor)
 
 ### 2.4 Git Migration Tool — Prototype ⚠️
 *Öne alındı. Kullanıcıları çekmek için Faz 2 sonunda çalışan bir prototype şart.*
-- [x] `.git/objects` → KV store converter (Prototype mantığı kuruldu)
-- [x] Commit zinciri, tree, blob aktarımı
-- [x] `hey import --from-git` — temel senaryolar (İskelet komut hazır)
+- [x] `.git/objects` → KV store converter (git cat-file + ls-tree ile blob/tree aktarımı)
+- [x] Commit zinciri, tree, blob aktarımı (parent_id zincirleme ile)
+- [x] `hey import --from-git` — temel senaryolar çalışıyor (gerçek migration, test ile doğrulandı)
 - [ ] Not: Tam fidelity (submodule, LFS pointer, tag) Faz 4'te
 
 **Faz 2 Çıktısı:** Dal + zaman makinesi + büyük dosya. Git projesi içe aktarılabilir (temel).
