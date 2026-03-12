@@ -35,6 +35,7 @@ fn main() {
     registry.register(Box::new(cmd::rewind::RewindVerb::new()));
     registry.register(Box::new(cmd::import::ImportVerb::new()));
     registry.register(Box::new(cmd::setup::SetupVerb::new()));
+    registry.register(Box::new(cmd::sync::SyncVerb::new()));
 
     match registry.find(command) {
         Some(verb) => {
