@@ -8,5 +8,7 @@ pub mod show;
 pub mod undo;
 pub mod setup;
 pub mod sync;
+pub mod get;
+
 // pub mod sync;
 // pub mod get;
