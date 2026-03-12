@@ -36,7 +36,7 @@ impl VerbPlugin for SyncVerb {
         // Şimdilik Phase 3 (Local-to-Local Prototiplendirmesi)
         // Eğer target bir HTTP linki değilse yerel dizin olarak kabul et
         if target.starts_with("http") {
-            return Err(anyhow!("HTTP tabanlı sync (Hub iletişimi) henüz implemente edilmedi."));
+            return sync_via_http(ctx, target);
         }
 
         let target_repo = Path::new(target).join(".something");
@@ -148,3 +148,55 @@ fn overwrite_remote_head(repo_path: &str, new_hash: &str) -> Result<()> {
     Ok(())
 }
 
+fn sync_via_http(ctx: &ThingContext, url: &str) -> Result<()> {
+    use std::time::Duration;
+    use crate::core::sync::DeltaPackage;
+
+    println!("{} sunucusuna bağlanılıyor...", url);
+    
+    // Şimdilik test amaçlı her zaman "test_project" ismiyle repo adı atıyoruz
+    // Prod'da namespace/proje-adi urlden çekilir
+    let repo_name = "test_project";
+
+    let local_store = ctx.store.as_ref()
+        .ok_or_else(|| anyhow!("Yerel repo başlatılmamış."))?;
+
+    let local_head = read_head_hash(&ctx.repo_path)?;
+    
+    // Basit olması adına şimdilik always push everything
+    // Fast-Forward vb. logic HTTP üzerinden daha sonra geliştirilecek.
+    // (Sunucudan once remote_head alinmali vs)
+    // Prototype amaclı tum deltayi root'tan alacağız.
+    let delta = compute_delta(local_store, &local_head, None)?;
+
+    #[derive(serde::Serialize)]
+    struct SyncRequest<'a> {
+        repo_name: &'a str,
+        delta: DeltaPackage,
+        local_head: &'a str,
+    }
+
+    let request_data = SyncRequest {
+        repo_name,
+        delta,
+        local_head: &local_head,
+    };
+
+    let client = reqwest::blocking::Client::builder()
+        .timeout(Duration::from_secs(300))
+        .build()?;
+
+    let sync_url = format!("{}/api/sync", url.trim_end_matches('/'));
+    
+    println!("Deltalar hesaplandı, aktarım başlıyor...");
+    let response = client.post(&sync_url)
+        .json(&request_data)
+        .send()?;
+
+    if response.status().is_success() {
+        println!("Senkronizasyon başarılı!");
+        Ok(())
+    } else {
+        Err(anyhow!("Sunucu hatası döndü: {}", response.status()))
+    }
+}

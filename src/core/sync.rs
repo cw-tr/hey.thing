@@ -3,7 +3,10 @@ use crate::core::object_model::{Commit, Tree};
 use anyhow::Result;
 use std::collections::HashSet;
 
+use serde::{Deserialize, Serialize};
+
 /// Senkronizasyon sürecinde transfer edilecek veriyi tutan paket
+#[derive(Serialize, Deserialize, Debug)]
 pub struct DeltaPackage {
     pub commits: Vec<(String, Vec<u8>)>,
     pub trees: Vec<(String, Vec<u8>)>,
