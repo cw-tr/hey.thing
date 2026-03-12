@@ -17,7 +17,7 @@ impl VerbPlugin for BranchVerb {
     }
 
     fn aliases(&self) -> &[&str] {
-        &["br"]
+        &[]
     }
 
     fn help(&self) -> &str {

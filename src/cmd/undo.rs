@@ -18,7 +18,7 @@ impl VerbPlugin for UndoVerb {
     }
 
     fn aliases(&self) -> &[&str] {
-        &["revert-last"]
+        &[]
     }
 
     fn help(&self) -> &str {

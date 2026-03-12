@@ -15,7 +15,7 @@ impl VerbPlugin for ImportVerb {
     }
 
     fn aliases(&self) -> &[&str] {
-        &["migrate"]
+        &[]
     }
 
     fn help(&self) -> &str {

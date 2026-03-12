@@ -17,7 +17,7 @@ impl VerbPlugin for RewindVerb {
     }
 
     fn aliases(&self) -> &[&str] {
-        &["go-to"]
+        &[]
     }
 
     fn help(&self) -> &str {

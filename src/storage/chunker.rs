@@ -1,13 +1,14 @@
 use fastcdc::v2020::FastCDC;
-use anyhow::Result;
 
 pub struct Chunker;
 
 impl Chunker {
     pub fn chunk_data(data: &[u8]) -> Vec<(String, Vec<u8>)> {
-        let avg_size = 4 * 1024 * 1024; // 4MB
-        let min_size = 2 * 1024 * 1024; // 2MB
-        let max_size = 8 * 1024 * 1024; // 8MB
+        // fastcdc v3.x limits: min_size must be reasonably small
+        // Let's use 64KB, 128KB, 256KB for testing stability
+        let avg_size = 128 * 1024; 
+        let min_size = 64 * 1024;
+        let max_size = 256 * 1024;
 
         let chunker = FastCDC::new(data, min_size, avg_size, max_size);
         let mut chunks = Vec::new();

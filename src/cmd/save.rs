@@ -23,7 +23,7 @@ impl VerbPlugin for SaveVerb {
     }
 
     fn aliases(&self) -> &[&str] {
-        &["s", "commit"]
+        &[]
     }
 
     fn help(&self) -> &str {

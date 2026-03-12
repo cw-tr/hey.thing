@@ -17,7 +17,7 @@ impl VerbPlugin for ShowVerb {
     }
 
     fn aliases(&self) -> &[&str] {
-        &["st", "status"]
+        &[]
     }
 
     fn help(&self) -> &str {

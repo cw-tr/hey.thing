@@ -1,14 +1,7 @@
-mod cmd;
-mod core;
-mod crypto;
-mod i18n;
-mod plugins;
-mod storage;
-#[cfg(test)]
-mod tests;
+use hey_thing::cmd;
 
-use crate::core::verb_plugin::ThingContext;
-use crate::plugins::verb_registry::VerbRegistry;
+use hey_thing::core::verb_plugin::ThingContext;
+use hey_thing::plugins::verb_registry::VerbRegistry;
 use std::env;
 
 fn main() {

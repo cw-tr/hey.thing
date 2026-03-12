@@ -18,7 +18,7 @@ impl VerbPlugin for ShiftVerb {
     }
 
     fn aliases(&self) -> &[&str] {
-        &["switch", "checkout"]
+        &[]
     }
 
     fn help(&self) -> &str {

@@ -15,3 +15,14 @@ anyhow = "1.0"
 walkdir = "2.4"
 fastcdc = "3.1"
 zstd = "0.13"
+
+[[bin]]
+name = "hey"
+path = "src/main.rs"
+
+[lib]
+name = "hey_thing"
+path = "src/lib.rs"
+
+[dev-dependencies]
+tempfile = "3.10"
