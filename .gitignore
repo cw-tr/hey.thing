@@ -1,0 +1,5 @@
+target/
+.something/
+.configthing
+*.rs.bk
+Cargo.lock
