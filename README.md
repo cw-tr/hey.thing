@@ -20,27 +20,39 @@
 - **Semantik AST Merge:** Sadece satırları değil, dili anlayan akıllı birleştirme sistemi.
 - **Event Journal:** Zaman makinesi desteği için her eylemin kaydı (`hey undo`).
 
-## 🛠️ Mevcut Durum (Faz 1: Çekirdek Motor)
+## 🛠️ Mevcut Durum (Faz 1, 2 ve kısmi 3 Tamamlandı)
 
-Şu an projenin Çekirdek Motor fazı tamamlanmıştır:
-- [x] **Repo Başlatma:** `hey init`
-- [x] **Kayıt Sistemi:** `hey save "mesaj"` (Blob ve Tree nesneleri KV store üzerine yazılır)
-- [x] **Durum İzleme:** `hey show`
-- [x] **Modüler Mimari:** VerbPlugin sistemi kuruldu.
+Şu an projenin Çekirdek, Geçmiş İzleme ve Ağ Senkronizasyonu fazları geliştirilmektedir:
+- [x] **Repo Başlatma & Güvenlik:** `hey init`, `hey setup trust`
+- [x] **Kayıt Sistemi:** `hey save "mesaj"` (Blob ve Tree nesneleri KV store üzerinde zstd ile sıkıştırılır, chunklanır)
+- [x] **Dallanma (Branching) & Shift:** `hey branch`, `hey shift`
+- [x] **Zaman Makinesi:** `hey rewind` ve `hey undo`
+- [x] **Git Göçü (Migration):** `hey import --from-git` (Mevcut git objelerini içeri aktarır)
+- [x] **Delta Senkronizasyon:** `hey sync` ve `hey get` komutlarıyla Uzak HTTP Hub'lara doğrudan push/pull yapabilme.
 
 ## 📦 Kurulum & Kullanım
 
-Şu an geliştirme aşamasında olduğu için `cargo` üzerinden çalıştırılabilir:
+Şu an geliştirme aşamasında olduğu için kaynak koddan derleyerek kullanabilirsiniz:
 
 ```bash
+# Bilgisayarınıza hey olarak derleyip kuralım
+cargo install --path .
+
 # Repo başlatma
-cargo run -- init
+hey init
 
-# Değişiklikleri kaydetme
-cargo run -- save "İlk commit veritabanına kaydedildi"
+# Dosya oluşturup kaydetme
+hey save "İlk commit veritabanına kaydedildi"
 
-# Durumu göster
-cargo run -- show
+# Yeni bir dala geçiş
+hey branch test-dali
+hey shift test-dali
+
+# Hub sunucusuna senkronize et (push)
+hey sync http://somewhere.cw.tr
+
+# Uzak sunucudaki güncellemeleri çek (pull/get)
+hey get http://somewhere.cw.tr
 ```
 
 ## 🏗️ Mimari Şema

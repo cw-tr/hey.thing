@@ -141,9 +141,10 @@ Takım çalışması tam         Bireysel/ajans kullanımı
 **Hedef:** İki kişi birlikte çalışabilsin
 
 ### 3.1 Sync Protokolü Tasarımı
-- [ ] Delta transfer: son ortak ancestor'dan itibaren sadece değişen chunk'lar
-- [ ] Protokol: HTTPS üzerinden msgpack binary format
-- [ ] Distributed conflict: ikinci push reddedilir → `hey sync` tekrar
+- [x] Delta transfer: son ortak ancestor'dan itibaren sadece değişen chunk'lar (JSON ve HTTP proxy üzerinden)
+- [x] Push ve Pull (Get) İstemci Mantığı: Uzak Hub üzerinden (`hey sync` ve `hey get` komutları)
+- [ ] Protokol: HTTPS üzerinden msgpack binary format (Şimdilik JSON/HTTP prototip yapıldı, msgpack Faz 4'e kalabilir)
+- [x] Distributed conflict: yerel tespit, çatışma uyarısı (`hey sync` içinde uygulanıyor)
 - [ ] CRDT/OT bu fazda yok — karmaşıklık faydasını aşar
 
 ### 3.2 Standart 3-Way Merge (AST Merge köprüsü)
