@@ -1,4 +1,3 @@
-pub mod branch;
 pub mod import;
 pub mod init;
 pub mod rewind;

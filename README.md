@@ -25,7 +25,7 @@
 Şu an projenin Çekirdek, Geçmiş İzleme ve Ağ Senkronizasyonu fazları geliştirilmektedir:
 - [x] **Repo Başlatma & Güvenlik:** `hey init`, `hey setup trust`
 - [x] **Kayıt Sistemi:** `hey save "mesaj"` (Blob ve Tree nesneleri KV store üzerinde zstd ile sıkıştırılır, chunklanır)
-- [x] **Dallanma (Branching) & Shift:** `hey branch`, `hey shift`
+- [x] **Dallanma (Branching) & Shift:** `hey shift` ile yollar (dallar) arasında geçiş yapma ve oluşturma
 - [x] **Zaman Makinesi:** `hey rewind` ve `hey undo`
 - [x] **Git Göçü (Migration):** `hey import --from-git` (Mevcut git objelerini içeri aktarır)
 - [x] **Delta Senkronizasyon:** `hey sync` ve `hey get` komutlarıyla Uzak HTTP Hub'lara doğrudan push/pull yapabilme.
@@ -44,9 +44,8 @@ hey init
 # Dosya oluşturup kaydetme
 hey save "İlk commit veritabanına kaydedildi"
 
-# Yeni bir dala geçiş
-hey branch test-dali
-hey shift test-dali
+# Yeni bir yol (dal) oluşturup ona geçiş yapma
+hey shift new test-dali
 
 # Hub sunucusuna senkronize et (push)
 hey sync http://somewhere.cw.tr

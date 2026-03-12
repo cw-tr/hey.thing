@@ -12,6 +12,12 @@ fn hey(dir: &std::path::Path, args: &[&str]) -> std::process::Output {
         .expect("hey binary çalıştırılamadı")
 }
 
+fn init_and_save(dir: &std::path::Path) {
+    hey(dir, &["init"]);
+    fs::write(dir.join("a.txt"), "v1").unwrap();
+    hey(dir, &["save", "ilk commit"]);
+}
+
 // ─── TESTLER ──────────────────────────────────────────────────────────────────
 
 #[test]
@@ -22,7 +28,7 @@ fn test_shift_between_branches() {
     fs::write(dir.path().join("f.txt"), "v1").unwrap();
     hey(dir.path(), &["save", "v1 main"]);
 
-    hey(dir.path(), &["branch", "new", "dev"]);
+    hey(dir.path(), &["shift", "new", "dev"]);
     fs::write(dir.path().join("f.txt"), "v2").unwrap();
     hey(dir.path(), &["save", "v2 dev"]);
 
@@ -46,9 +52,60 @@ fn test_shift_updates_head() {
     fs::write(dir.path().join("f.txt"), "v1").unwrap();
     hey(dir.path(), &["save", "commit 1"]);
 
-    hey(dir.path(), &["branch", "new", "feat"]);
+    hey(dir.path(), &["shift", "new", "feat"]);
     hey(dir.path(), &["shift", "main"]);
 
     let head = fs::read_to_string(dir.path().join(".something/HEAD")).unwrap();
     assert!(head.contains("refs/heads/main"), "HEAD main'e işaret etmeli");
+}
+
+#[test]
+fn test_shift_list_shows_main() {
+    let dir = TempDir::new().unwrap();
+    init_and_save(dir.path());
+
+    let out = hey(dir.path(), &["shift"]);
+    let stdout = String::from_utf8_lossy(&out.stdout);
+    assert!(stdout.contains("main"), "main dalı listelenmeli");
+    assert!(stdout.contains("*"), "Aktif dal * ile işaretlenmeli");
+}
+
+#[test]
+fn test_shift_new_creates_branch() {
+    let dir = TempDir::new().unwrap();
+    init_and_save(dir.path());
+
+    let out = hey(dir.path(), &["shift", "new", "feature"]);
+    assert!(out.status.success());
+    let stdout = String::from_utf8_lossy(&out.stdout);
+    assert!(stdout.contains("yolu oluşturuldu"), "Yol oluşturuldu mesajı gelmeli");
+
+    assert!(dir.path().join(".something/refs/heads/feature").exists(),
+        "feature dalı refs/heads/ altında oluşturulmalı");
+}
+
+#[test]
+fn test_shift_new_switches_to_new_branch() {
+    let dir = TempDir::new().unwrap();
+    init_and_save(dir.path());
+
+    hey(dir.path(), &["shift", "new", "dev"]);
+
+    let out = hey(dir.path(), &["shift"]);
+    let stdout = String::from_utf8_lossy(&out.stdout);
+    assert!(stdout.contains("* dev"), "Yeni dal aktif olmalı");
+}
+
+#[test]
+fn test_shift_duplicate_name_fails() {
+    let dir = TempDir::new().unwrap();
+    init_and_save(dir.path());
+
+    hey(dir.path(), &["shift", "new", "test-dal"]);
+    let out = hey(dir.path(), &["shift", "new", "test-dal"]);
+
+    assert!(!out.status.success() || {
+        let stderr = String::from_utf8_lossy(&out.stderr);
+        stderr.contains("zaten mevcut")
+    }, "Aynı isimle dal açmak hata vermeli");
 }

@@ -106,8 +106,8 @@ Takım çalışması tam         Bireysel/ajans kullanımı
 
 ### 2.1 Branch Sistemi
 - [x] Branch: commit ID'ye işaret eden hafif referans (refs/heads/ altında saklanıyor)
-- [x] `hey branch new <isim>` → yeni dal + geçiş (Implemente edildi)
-- [x] `hey branch list` (Yüklü dalları * işaretiyle gösteriyor)
+- [x] `hey shift new <isim>` → yeni yol + geçiş (Implemente edildi)
+- [x] `hey shift` (Yüklü dalları * işaretiyle gösteriyor)
 - [x] `hey shift <dal>` → dal değiştirme (Çalışma dizini güncelleme desteğiyle hazır)
 - [x] Working tree state: değiştirilmemiş dosyalar hızlı geçiş (Temel geçiş mantığı kuruldu)
 

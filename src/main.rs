@@ -29,7 +29,6 @@ fn main() {
     registry.register(Box::new(cmd::init::InitVerb::new()));
     registry.register(Box::new(cmd::save::SaveVerb::new()));
     registry.register(Box::new(cmd::show::ShowVerb::new()));
-    registry.register(Box::new(cmd::branch::BranchVerb::new()));
     registry.register(Box::new(cmd::shift::ShiftVerb::new()));
     registry.register(Box::new(cmd::undo::UndoVerb::new()));
     registry.register(Box::new(cmd::rewind::RewindVerb::new()));
