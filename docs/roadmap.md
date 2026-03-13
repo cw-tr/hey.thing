@@ -204,11 +204,12 @@ Takım çalışması tam         Bireysel/ajans kullanımı
 - [x] İlk başarılı semantik merge testi (Rust functions) ✅
 - [ ] Tam test suite — diğer `*.thing` eklentileri için referans testler
 
-### 4.3 Resmi Dil Eklentileri (Somewhere tarafından bakımı)
-- [ ] `py.thing` — tree-sitter-python + LangPlugin
-- [ ] `js.thing` — tree-sitter-javascript + tree-sitter-typescript
-- [ ] `go.thing` — tree-sitter-go
-- [ ] Her eklenti `hey lang test <eklenti>` standardını geçmeli
+### 4.3 Resmi Dil Eklentileri (Somewhere Plugin Library)
+- [x] `plugins/` resmi eklenti deposu iskeleti oluşturuldu ✅
+- [x] `py.thing` — rustpython-parser ile Python desteği (WIP/AST Iskelet) ✅
+- [x] `js.thing` — swc_ecma_parser ile JS/TS desteği (WIP/AST Iskelet) ✅
+- [ ] `go.thing` — tree-sitter-go (Ar-Ge aşamasında)
+- [ ] Her eklenti için birim testler
 
 ### 4.4 `hey lang` + `hey verb` Komutları
 - [x] `hey lang add py.thing` — eklenti kurulumu ✅
