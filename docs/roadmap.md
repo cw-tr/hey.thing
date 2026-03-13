@@ -245,7 +245,7 @@ Takım çalışması tam         Bireysel/ajans kullanımı
 - [ ] **CI Pipeline Fix:** GitHub Actions üzerinde yerel DB bağımlılığı olan testlerin (local-only tests) ayıklanması ve "mock"lanması. ⚠️
 - [ ] **TUI Diff Highlighting:** Çatışma çözücüde satır bazlı renkli diff gösterimi (Option A). 🌈
 - [ ] **Code Coverage:** Test kapsamının %80 üzerine çıkarılması.
-- [ ] **Documentation:** `hey.thing` eklenti geliştirme rehberi (LangPlugin tutorial).
+- [x] **Documentation:** `hey.thing` eklenti geliştirme rehberi (LangPlugin tutorial). ✅
 
 **Faz 4 Çıktısı:** hey.thing gerçek rekabet avantajına kavuştu. Modüler verb + dil ekosistemi tam çalışıyor. Topluluk kendi `*.thing` verb ve dil eklentilerini yazabilir.
 
