@@ -217,6 +217,7 @@ Takım çalışması tam         Bireysel/ajans kullanımı
 - [x] `hey verb add ./deploy.thing` — yeni komut ekleme ✅
 - [x] `hey verb list` — yüklü verb'ler (PROTECTED kontrolüyle) ✅
 - [x] `hey verb remove` — eklenti silme ✅
+- [x] **Katmanlı Arama:** Plugin'ler hem `~/.something` hem de binary yanındaki `langs|verbs` klasörlerinden yükleniyor (Binary-Relative Search) ✅
 
 ### 4.5 TUI AST Conflict Asistanı
 - [ ] Terminal içinde ikiye bölünmüş görsel ekran (ratatui)

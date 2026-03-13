@@ -30,15 +30,21 @@ impl VerbPlugin for VerbVerb {
         fs::create_dir_all(&verb_dir)?;
 
         if args.is_empty() || args[0] == "list" {
-            println!("Yüklü komut eklentileri (~/.something/verbs/):");
-            let entries = fs::read_dir(&verb_dir)?;
+            println!("Yüklü komut eklentileri (tüm kaynaklar):");
+            let paths = crate::plugins::get_plugin_search_paths("verbs");
             let mut count = 0;
-            for entry in entries.flatten() {
-                let path = entry.path();
-                if path.extension().and_then(|s| s.to_str()) == Some("thing") {
-                    let name = path.file_stem().unwrap().to_string_lossy();
-                    println!("  - {: <10} ({})", name, path.display());
-                    count += 1;
+
+            for dir_path in paths {
+                if !dir_path.exists() { continue; }
+                if let Ok(entries) = fs::read_dir(&dir_path) {
+                    for entry in entries.flatten() {
+                        let path = entry.path();
+                        if path.extension().and_then(|s| s.to_str()) == Some("thing") {
+                            let name = path.file_stem().unwrap().to_string_lossy();
+                            println!("  - {: <10} ({})", name, path.display());
+                            count += 1;
+                        }
+                    }
                 }
             }
             if count == 0 {

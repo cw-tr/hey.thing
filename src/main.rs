@@ -39,9 +39,9 @@ fn main() {
     registry.register(Box::new(cmd::lang::LangVerb::new()));
     registry.register(Box::new(cmd::verb::VerbVerb::new()));
 
-    // Eklentileri yükle (~/.something/verbs/)
-    let something_dir = hey_thing::plugins::get_something_dir();
-    registry.load_plugins_from_dir(&something_dir.join("verbs"));
+    // Eklentileri yükle
+    let verb_paths = hey_thing::plugins::get_plugin_search_paths("verbs");
+    registry.load_plugins_from_dirs(&verb_paths);
 
     match registry.find(command) {
         Some(verb) => {

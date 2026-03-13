@@ -325,10 +325,8 @@ pub fn perform_merge(
     
     // Wasm AST Eklentilerini Yükle
     let mut lang_registry = crate::plugins::lang_registry::LangRegistry::new();
-    if let Some(user_dirs) = directories::UserDirs::new() {
-        let langs_dir = user_dirs.home_dir().join(".something").join("langs");
-        lang_registry.load_plugins_from_dir(&langs_dir);
-    }
+    let lang_paths = crate::plugins::get_plugin_search_paths("langs");
+    lang_registry.load_plugins_from_dirs(&lang_paths);
 
     for (path, (base_hash, local_hash, remote_hash)) in candidates {
         let base_data = if let Some(h) = base_hash { 

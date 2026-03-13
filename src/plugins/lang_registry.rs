@@ -1,6 +1,5 @@
 use std::collections::HashMap;
 use std::sync::Arc;
-use std::path::Path;
 use crate::plugins::wasm_engine::WasmLangPlugin;
 use crate::core::ast_plugin::LangPlugin;
 
@@ -17,7 +16,8 @@ impl LangRegistry {
 
     pub fn register(&mut self, plugin: Arc<dyn LangPlugin>) {
         for ext in plugin.extensions() {
-            self.plugins.insert(ext, plugin.clone());
+            // Eğer bu uzantı için zaten bir eklenti (üst katmandan gelen) varsa ezme!
+            self.plugins.entry(ext).or_insert(plugin.clone());
         }
     }
 
@@ -26,21 +26,24 @@ impl LangRegistry {
         self.plugins.get(ext).cloned()
     }
 
-    /// `~/.something/langs/` dizinindeki *.thing (WASM) dosyalarını tarayıp yükler.
-    pub fn load_plugins_from_dir(&mut self, dir_path: &Path) {
-        if !dir_path.exists() { return; }
+    /// Verilen dizinlerdeki *.thing (WASM) dosyalarını tarayıp yükler.
+    pub fn load_plugins_from_dirs(&mut self, dirs: &[std::path::PathBuf]) {
+        for dir_path in dirs {
+            if !dir_path.exists() { continue; }
 
-        if let Ok(entries) = std::fs::read_dir(dir_path) {
-            for entry in entries.flatten() {
-                let path = entry.path();
-                if path.is_file() && path.extension().and_then(|s| s.to_str()) == Some("thing") {
-                    // Güvenlik: İleride burada signature verification (imza doğrulaması) yapılacak.
-                    match WasmLangPlugin::new(&path) {
-                        Ok(plugin) => {
-                            self.register(Arc::new(plugin));
-                        }
-                        Err(e) => {
-                            eprintln!("Hata: {} yüklenemedi -> {}", path.display(), e);
+            if let Ok(entries) = std::fs::read_dir(dir_path) {
+                for entry in entries.flatten() {
+                    let path = entry.path();
+                    if path.is_file() && path.extension().and_then(|s| s.to_str()) == Some("thing") {
+                        // Aynı dile ait eklenti daha önce yüklenmişse (öncelik sırası gereği) atla
+                        // (Register içindeki logic ile ilk gelen/üst katmandaki korunur)
+                        match WasmLangPlugin::new(&path) {
+                            Ok(plugin) => {
+                                self.register(Arc::new(plugin));
+                            }
+                            Err(e) => {
+                                eprintln!("Hata: {} yüklenemedi -> {}", path.display(), e);
+                            }
                         }
                     }
                 }
