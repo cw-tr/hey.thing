@@ -16,6 +16,13 @@ walkdir = "2.4"
 fastcdc = "3.1"
 zstd = "0.13"
 reqwest = { version = "0.12", features = ["json", "blocking"] }
+ed25519-dalek = { version = "2.1", features = ["rand_core"] }
+rand = "0.8"
+base64 = "0.22"
+hex = "0.4"
+similar = "2.4"
+wasmtime = "42.0.1"
+directories = "6.0.0"
 [[bin]]
 name = "hey"
 path = "src/main.rs"

@@ -1,7 +1,8 @@
 use anyhow::{Result, anyhow};
 use crate::core::verb_plugin::{VerbPlugin, ThingContext};
 use crate::storage::kv_store::KvStore;
-use crate::core::sync::{find_common_ancestor, compute_delta};
+use crate::core::sync::{find_common_ancestor, compute_delta, apply_checkout};
+use crate::core::object_model::Commit;
 use std::fs;
 use std::path::Path;
 
@@ -23,103 +24,127 @@ impl VerbPlugin for SyncVerb {
     }
 
     fn help(&self) -> &str {
-        "Uzak veya yerel depo ile senkronize olur (push/pull)"
+        "Uzak veya yerel depo ile senkronize olur. Argümansız kullanımda configdeki tüm hedeflere (backup, remote) sırayla aktarır."
     }
 
     fn run(&self, ctx: &ThingContext, args: &[String]) -> Result<()> {
-        if args.is_empty() {
-            return Err(anyhow!("Hedef dizin (veya URL) belirtilmedi. Örn: hey sync /tmp/repo_b"));
-        }
-
-        let target = &args[0];
+        let config = crate::core::config::Config::load(".configthing").ok();
         
-        // Şimdilik Phase 3 (Local-to-Local Prototiplendirmesi)
-        // Eğer target bir HTTP linki değilse yerel dizin olarak kabul et
-        if target.starts_with("http") {
-            return sync_via_http(ctx, target);
-        }
+        let mut targets = Vec::new();
 
-        let target_repo = Path::new(target).join(".something");
-        if !target_repo.exists() {
-            return Err(anyhow!("Belirtilen hedef konum geçerli bir hey.thing reposu değil: {}", target));
-        }
-
-        let local_store = ctx.store.as_ref()
-            .ok_or_else(|| anyhow!("Yerel repo başlatılmamış."))?;
-
-        let remote_store = KvStore::open(target_repo.join("db"))
-            .map_err(|_| anyhow!("Uzak deponun veritabanına ulaşılamadı. Başka bir işlem kilitliyor olabilir."))?;
-
-        let local_head = read_head_hash(&ctx.repo_path)?;
-        let remote_head = read_head_hash(target_repo.to_str().unwrap())?;
-
-        // Fast-forward kontrolü (ben de ondan daha ileri miyim yoksa ayrıştık mı?)
-        let ancestor = find_common_ancestor(local_store, &local_head, &remote_head)?;
-
-        if ancestor.as_deref() == Some(&remote_head) || remote_head.is_empty() {
-            // Local, remotan'un doğrudan soyundan geliyor (Fast-Forward push uygun)
-            println!("Senkronizasyon (push) başlıyor...");
+        if args.is_empty() {
+            // Argüman yoksa zincirleme (Chain) mod: backup -> remote
+            if let Some(cfg) = &config {
+                if let Some(b) = &cfg.somewhere.backup {
+                    targets.push(b.clone());
+                }
+                if let Some(r) = &cfg.somewhere.remote {
+                    targets.push(r.clone());
+                }
+            }
             
-            // Delta paketini hazırla
-            let delta = compute_delta(local_store, &local_head, ancestor.as_deref())?;
-            println!("Aktarılacak paket boyutu hesaplandı: {} commit, {} tree, {} blob",
-                delta.commits.len(), delta.trees.len(), delta.blobs.len()
-            );
-
-            // Paketleri karşıya yükle (KV'ye yaz)
-            // Önce blob'lar (dosya içerikleri)
-            for (hash, data) in delta.blobs {
-                remote_store.put(hash.as_bytes(), &data)?;
+            if targets.is_empty() {
+                 return Err(anyhow!("Senkronizasyon için hedef bulunamadı. Lütfen .configthing dosyasını veya manuel URL belirtin."));
             }
-
-            // Sonra tree'ler (dizin yapıları)
-            for (hash, data) in delta.trees {
-                remote_store.put(hash.as_bytes(), &data)?;
-            }
-
-            // En son commit'ler
-            for (hash, data) in delta.commits {
-                remote_store.put(hash.as_bytes(), &data)?;
-            }
-
-            // Karşı tarafın HEAD referansını güncelle
-            overwrite_remote_head(target_repo.to_str().unwrap(), &local_head)?;
-
-            println!("Senkronizasyon tamamlandı. Hedef sürüm başarıyla ilerletildi.");
-            
-        } else if ancestor.as_deref() == Some(&local_head) {
-            // Remote benden ileride (pull gerekiyor, biz geri kalmışız)
-            println!("Uzak depo sizden daha güncel ('pull' işlemi henüz desteklenmiyor).");
         } else {
-            // Çatallanma (conflict var)
-            println!("ÇATIŞMA (Conflict): Her iki depo da farklı yönlere evrilmiş.");
-            println!("Bunu çözmek için AST-Merge arayüzü gereklidir. (Faz 4)");
+            // Argüman varsa ya 'backup', ya 'remote' ya da direkt yol/URL'dir
+            let arg = &args[0];
+            if let Some(cfg) = &config {
+                if arg == "backup" {
+                    if let Some(b) = &cfg.somewhere.backup { targets.push(b.clone()); }
+                } else if arg == "remote" {
+                    if let Some(r) = &cfg.somewhere.remote { targets.push(r.clone()); }
+                }
+            }
+            
+            if targets.is_empty() {
+                targets.push(arg.clone()); // Doğrudan URL veya Yol kabul et
+            }
+        }
+
+        for target in targets {
+            println!("--- Hedef senkronize ediliyor: {} ---", target);
+            if let Err(e) = sync_to_target(ctx, &target) {
+                println!("HATA: {} hedefine senkronizasyon başarısız: {}", target, e);
+            }
         }
 
         Ok(())
     }
 }
 
-// ─── Yardımcı Fonksiyonlar ──────────────────────────────────────────
+fn sync_to_target(ctx: &ThingContext, target: &str) -> Result<()> {
+    if target.starts_with("http") {
+        return sync_via_http(ctx, target);
+    }
 
+    let target_repo = Path::new(target).join(".something");
+    if !target_repo.exists() {
+        return Err(anyhow!("Belirtilen hedef konum geçerli bir hey.thing reposu değil: {}", target));
+    }
+
+    let local_store = ctx.store.as_ref()
+        .ok_or_else(|| anyhow!("Yerel repo başlatılmamış."))?;
+
+    let remote_store = KvStore::open(target_repo.join("db"))
+        .map_err(|_| anyhow!("Uzak deponun veritabanına ulaşılamadı. Başka bir işlem kilitliyor olabilir."))?;
+
+    let local_head = read_head_hash(&ctx.repo_path)?;
+    let remote_head = read_head_hash(target_repo.to_str().unwrap())?;
+
+    let ancestor = find_common_ancestor(local_store, &local_head, &remote_head)?;
+
+    if ancestor.as_deref() == Some(&remote_head) || remote_head.is_empty() {
+        println!("Senkronizasyon (push) başlıyor...");
+        let delta = compute_delta(local_store, &local_head, ancestor.as_deref())?;
+        
+        for (hash, data) in delta.blobs { remote_store.put(hash.as_bytes(), &data)?; }
+        for (hash, data) in delta.trees { remote_store.put(hash.as_bytes(), &data)?; }
+        for (hash, data) in delta.commits { remote_store.put(hash.as_bytes(), &data)?; }
+
+        overwrite_remote_head(target_repo.to_str().unwrap(), &local_head)?;
+        println!("Senkronizasyon tamamlandı.");
+        
+    } else if ancestor.as_deref() == Some(&local_head) {
+        // Karşı taraf bizden daha önde → local repo pull ile güncellenebilir
+        println!("UYARI: Uzak (backup) depo sizden daha güncel.");
+        println!("Yerel çalışma dizini fast-forward ile güncelleniyor...");
+        let delta = compute_delta(&remote_store, &remote_head, ancestor.as_deref())?;
+        for (hash, data) in delta.blobs { local_store.put(hash.as_bytes(), &data)?; }
+        for (hash, data) in delta.trees { local_store.put(hash.as_bytes(), &data)?; }
+        for (hash, data) in delta.commits { local_store.put(hash.as_bytes(), &data)?; }
+        let remote_commit: Commit = serde_json::from_slice(&local_store.get(remote_head.as_bytes())?.unwrap())?;
+        let work_dir = Path::new(&ctx.repo_path).parent().unwrap();
+        apply_checkout(local_store, &remote_commit.tree_hash, work_dir)?;
+        overwrite_remote_head(&ctx.repo_path, &remote_head)?;
+        println!("Yerel depo güncellendi: {}", remote_head);
+
+    } else {
+        println!("ÇATIŞMA: Her iki depo da farklı yönlere evrilmiş. 3-way merge deneniyor...");
+        crate::core::sync::perform_merge(
+            local_store,
+            std::path::Path::new(&ctx.repo_path).parent().unwrap(),
+            &local_head,
+            &remote_head,
+            &ancestor.unwrap()
+        )?;
+        println!("Merge işlemi tamamlandı. Lütfen kontrol edip save yapın.");
+    }
+
+    Ok(())
+}
+
+
+// sync_via_http, read_head_hash, overwrite_remote_head fonksiyonları aynen korunmalı...
 fn read_head_hash(repo_path: &str) -> Result<String> {
     let head_path = format!("{}/HEAD", repo_path);
-    if !Path::new(&head_path).exists() {
-        return Ok(String::new());
-    }
-    
+    if !Path::new(&head_path).exists() { return Ok(String::new()); }
     let content = fs::read_to_string(&head_path)?.trim().to_string();
     if content.starts_with("ref: ") {
         let ref_path = content.trim_start_matches("ref: ").trim();
         let target = format!("{}/{}", repo_path, ref_path);
-        if Path::new(&target).exists() {
-            Ok(fs::read_to_string(target)?.trim().to_string())
-        } else {
-            Ok(String::new())
-        }
-    } else {
-        Ok(content)
-    }
+        if Path::new(&target).exists() { Ok(fs::read_to_string(target)?.trim().to_string()) } else { Ok(String::new()) }
+    } else { Ok(content) }
 }
 
 fn overwrite_remote_head(repo_path: &str, new_hash: &str) -> Result<()> {
@@ -131,62 +156,45 @@ fn overwrite_remote_head(repo_path: &str, new_hash: &str) -> Result<()> {
         std::fs::write(&head_path, "ref: refs/heads/main")?;
         return Ok(());
     }
-
     let content = std::fs::read_to_string(&head_path)?.trim().to_string();
-    
     if content.starts_with("ref: ") {
         let ref_path = content.trim_start_matches("ref: ").trim();
         let target_path = format!("{}/{}", repo_path, ref_path);
-        if let Some(parent) = std::path::Path::new(&target_path).parent() {
-            std::fs::create_dir_all(parent)?;
-        }
+        if let Some(parent) = std::path::Path::new(&target_path).parent() { std::fs::create_dir_all(parent)?; }
         std::fs::write(target_path, new_hash)?;
-    } else {
-        std::fs::write(head_path, new_hash)?;
-    }
-    
+    } else { std::fs::write(head_path, new_hash)?; }
     Ok(())
 }
 
 fn sync_via_http(ctx: &ThingContext, url: &str) -> Result<()> {
     use std::time::Duration;
     use crate::core::sync::DeltaPackage;
+    use crate::crypto::auth::KeyManager;
 
-    println!("{} sunucusuna bağlanılıyor...", url);
-    
-    let local_store = ctx.store.as_ref()
-        .ok_or_else(|| anyhow!("Yerel repo başlatılmamış."))?;
-
+    let local_store = ctx.store.as_ref().ok_or_else(|| anyhow!("Yerel repo başlatılmamış."))?;
     let local_head = read_head_hash(&ctx.repo_path)?;
-    
-    // Basit olması adına şimdilik always push everything
-    // Fast-Forward vb. logic HTTP üzerinden daha sonra geliştirilecek.
-    // (Sunucudan once remote_head alinmali vs)
-    // Prototype amaclı tum deltayi root'tan alacağız.
     let delta = compute_delta(local_store, &local_head, None)?;
 
     #[derive(serde::Serialize)]
     struct SyncRequest<'a> {
-        delta: DeltaPackage,
+        public_key: String,
+        signature: String,
         local_head: &'a str,
+        delta: DeltaPackage,
     }
 
-    let request_data = SyncRequest {
-        delta,
-        local_head: &local_head,
-    };
+    let signing_key = KeyManager::get_or_create_key()?;
+    let public_key_hex = hex::encode(signing_key.verifying_key().to_bytes());
+    let delta_json = serde_json::to_vec(&delta)?;
+    let delta_hash = crate::crypto::hash::hash_data(&delta_json);
+    let sign_payload = format!("{}:{}", local_head, delta_hash);
+    let signature = KeyManager::sign(sign_payload.as_bytes())?;
 
-    let client = reqwest::blocking::Client::builder()
-        .timeout(Duration::from_secs(300))
-        .build()?;
-
+    let request_data = SyncRequest { public_key: public_key_hex, signature, local_head: &local_head, delta };
+    let client = reqwest::blocking::Client::builder().timeout(Duration::from_secs(300)).build()?;
     let sync_url = format!("{}/api/sync", url.trim_end_matches('/'));
     
-    println!("Deltalar hesaplandı, aktarım başlıyor...");
-    let response = client.post(&sync_url)
-        .json(&request_data)
-        .send()?;
-
+    let response = client.post(&sync_url).json(&request_data).send()?;
     if response.status().is_success() {
         println!("Senkronizasyon başarılı!");
         Ok(())

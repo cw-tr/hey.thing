@@ -153,8 +153,8 @@ Takım çalışması tam         Bireysel/ajans kullanımı
 
 ### 3.2 Standart 3-Way Merge (AST Merge köprüsü)
 *AST Merge Faz 4'te. Araya köprü lazım.*
-- [ ] xdiff / `similar` crate ile satır bazlı 3-way merge
-- [ ] Yapılandırılmış conflict işaretleyicisi:
+- [x] xdiff / `similar` crate ile satır bazlı 3-way merge (Myers diff motoru, satır düzeyinde çakışma tespiti)
+- [x] Yapılandırılmış conflict işaretleyicisi:
 ```
 ~~~ CONFLICT: auth.rs:42 ~~~
 [THEIRS] fn authenticate(user: &str) -> bool {
@@ -165,15 +165,17 @@ Takım çalışması tam         Bireysel/ajans kullanımı
 - [ ] `hey sync` → conflict varsa TUI aç
 
 ### 3.3 Hub Authentication
-- [ ] `hey init` → ed25519 anahtar çifti → `~/.something/keys/`
-- [ ] `hey setup.hey.thing auth login` → Hub'a bağlan, public key kaydet
-- [ ] OAuth2 hızlı giriş (GitHub/GitLab hesabıyla)
-- [ ] Token yenileme, SSH agent entegrasyonu
+- [x] `hey init` → ed25519 anahtar çifti üretimi (`~/.something/keys/`)
+- [x] Hub tarafında ilk push'ta Public Key kaydı (Namespace kilitlenme)
+- [x] Her sync işleminde ed25519-dalek ile dijital imza doğrulaması
+- [ ] OAuth2 hızlı giriş ve Token yönetimi (Faz 4/5)
 
 ### 3.4 Clone + Push/Fetch
-- [ ] `hey get <namespace>` → Hub'dan clone
-- [ ] Push/fetch döngüsü
-- [ ] `hey sync` akıllı süreci
+- [x] `hey get <target>` → Hub'dan veri çekme (DB seviyesi)
+- [x] Push/fetch döngüsü (Smart Sync)
+- [x] `hey sync` akıllı zincirleme süreci (Backup -> Remote)
+- [x] `hey get` veriyi çalışma dizinine otomatik yansıtma (Fast-Forward + Merge/Checkout) ✅
+- [x] `hey get` Ed25519 kimlik doğrulaması (Hub tarafında imza zorunlu) ✅
 
 **Faz 3 Çıktısı:** İki geliştirici Hub üzerinden birlikte çalışabiliyor.
 
@@ -185,14 +187,14 @@ Takım çalışması tam         Bireysel/ajans kullanımı
 
 ### 4.1 Plugin Altyapısı — VerbPlugin + LangPlugin ← Önce Bu
 *Eklenti çerçevesini kur — verb ve dil eklentileri aynı sandbox'ı paylaşır.*
-- [ ] `core/ast_plugin.rs` — `LangPlugin` trait tanımı
-- [ ] `core/verb_plugin.rs` — `VerbPlugin` trait doğrulaması (Faz 1 iskeleti tam hale gelir)
-- [ ] `plugins/lang_registry.rs` — `~/.something/langs/` dizin tarayıcısı
-- [ ] `plugins/verb_registry.rs` — `~/.something/verbs/` dizin tarayıcısı, PROTECTED kontrolü
-- [ ] Uzantı → plugin eşleme: `.py` → `py.thing`, `.js` → `js.thing`
-- [ ] wasmtime sandbox: her `*.thing` izole çalışır, dosya sistemi erişimi yok
-- [ ] Plugin imza doğrulaması: imzasız `*.thing` yüklenmez
-- [ ] `[langs.fallback] strategy = "line-diff"` — eklenti yoksa satır bazlı merge
+- [x] `core/ast_plugin.rs` — `LangPlugin` trait tanımı
+- [x] `core/verb_plugin.rs` — `VerbPlugin` trait doğrulaması (Faz 1 iskeleti tam hale gelir)
+- [x] `plugins/lang_registry.rs` — `~/.something/langs/` dizin tarayıcısı
+- [x] `plugins/verb_registry.rs` — `~/.something/verbs/` dizin tarayıcısı, PROTECTED kontrolü
+- [x] Uzantı → plugin eşleme: `.py` → `py.thing`, `.js` → `js.thing`
+- [x] wasmtime sandbox: her `*.thing` izole çalışır, dosya sistemi erişimi yok
+- [x] Plugin imza doğrulaması: imzasız `*.thing` yüklenmez
+- [x] `[langs.fallback]` strategy = "line-diff" — eklenti yoksa veya başarısız olursa satır bazlı merge
 
 ### 4.2 `rs.thing` — Referans Implementasyon (Açık Kaynak)
 *Topluluk "kendi dilim için nasıl yazarım?" diye sorduğunda cevap bu.*

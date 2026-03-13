@@ -4,3 +4,4 @@ pub mod journal;
 pub mod object_model;
 pub mod verb_plugin;
 pub mod sync;
+pub mod paths;

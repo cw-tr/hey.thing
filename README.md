@@ -20,15 +20,17 @@
 - **Semantik AST Merge:** Sadece satırları değil, dili anlayan akıllı birleştirme sistemi.
 - **Event Journal:** Zaman makinesi desteği için her eylemin kaydı (`hey undo`).
 
-## 🛠️ Mevcut Durum (Faz 1, 2 ve kısmi 3 Tamamlandı)
+## 🛠️ Mevcut Durum (Faz 1, 2, 3 ve 4.1 Tamamlandı)
 
-Şu an projenin Çekirdek, Geçmiş İzleme ve Ağ Senkronizasyonu fazları geliştirilmektedir:
+Şu an projenin Çekirdek, Geçmiş İzleme, Ağ Senkronizasyonu ve Semantik Zeka (WASM Plugin Engine) fazları geliştirilmektedir:
 - [x] **Repo Başlatma & Güvenlik:** `hey init`, `hey setup trust`
 - [x] **Kayıt Sistemi:** `hey save "mesaj"` (Blob ve Tree nesneleri KV store üzerinde zstd ile sıkıştırılır, chunklanır)
 - [x] **Dallanma (Branching) & Shift:** `hey shift` ile yollar (dallar) arasında geçiş yapma ve oluşturma
 - [x] **Zaman Makinesi:** `hey rewind` ve `hey undo`
 - [x] **Git Göçü (Migration):** `hey import --from-git` (Mevcut git objelerini içeri aktarır)
 - [x] **Delta Senkronizasyon:** `hey sync` ve `hey get` komutlarıyla Uzak HTTP Hub'lara doğrudan push/pull yapabilme.
+- [x] **Çakışma Toleransı ve Otomatik Merge:** `hey get` komutuyla veri çekilirken akıllı 3-Way merge yapılması (Diverge vs Fast-Forward algılama).
+- [x] **Semantik AST Motoru (Faz 4.1):** `wasmtime` tabanlı `LangPlugin` altyapısı sayesinde eklenti tabanlı AST formatında merge yeteneği.
 
 ## 📦 Kurulum & Kullanım
 
@@ -47,11 +49,16 @@ hey save "İlk commit veritabanına kaydedildi"
 # Yeni bir yol (dal) oluşturup ona geçiş yapma
 hey shift new test-dali
 
-# Hub sunucusuna senkronize et (push)
-hey sync http://somewhere.cw.tr/mukan/projem
+# Hub yapılandırmasını ayarla (.configthing içinde [somewhere] bloğu)
+# hey sync artık parametresiz olarak önce backup'a sonra remote'a aktarır
+hey sync
+
+# Belirli bir hedefe senkronize et
+hey sync backup
+hey sync remote
 
 # Uzak sunucudaki güncellemeleri çek (pull/get)
-hey get http://somewhere.cw.tr/mukan/projem
+hey get remote
 ```
 
 ## 🏗️ Mimari Şema

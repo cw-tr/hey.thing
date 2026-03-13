@@ -9,6 +9,14 @@ pub struct Config {
     pub behavior: BehaviorConfig,
     #[serde(default)]
     pub security: SecurityConfig,
+    #[serde(default)]
+    pub somewhere: SomewhereConfig,
+}
+
+#[derive(Serialize, Deserialize, Debug, Default)]
+pub struct SomewhereConfig {
+    pub backup: Option<String>,
+    pub remote: Option<String>,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
