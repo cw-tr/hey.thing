@@ -23,6 +23,7 @@ hex = "0.4"
 similar = "2.4"
 wasmtime = "42.0.1"
 directories = "6.0.0"
+wasmtime-wasi = "42.0.1"
 [[bin]]
 name = "hey"
 path = "src/main.rs"

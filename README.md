@@ -20,7 +20,7 @@
 - **Semantik AST Merge:** Sadece satırları değil, dili anlayan akıllı birleştirme sistemi.
 - **Event Journal:** Zaman makinesi desteği için her eylemin kaydı (`hey undo`).
 
-## 🛠️ Mevcut Durum (Faz 1, 2, 3 ve 4.1 Tamamlandı)
+## 🛠️ Mevcut Durum (Faz 1, 2, 3 ve 4.1, 4.2 Tamamlandı)
 
 Şu an projenin Çekirdek, Geçmiş İzleme, Ağ Senkronizasyonu ve Semantik Zeka (WASM Plugin Engine) fazları geliştirilmektedir:
 - [x] **Repo Başlatma & Güvenlik:** `hey init`, `hey setup trust`
@@ -31,6 +31,7 @@
 - [x] **Delta Senkronizasyon:** `hey sync` ve `hey get` komutlarıyla Uzak HTTP Hub'lara doğrudan push/pull yapabilme.
 - [x] **Çakışma Toleransı ve Otomatik Merge:** `hey get` komutuyla veri çekilirken akıllı 3-Way merge yapılması (Diverge vs Fast-Forward algılama).
 - [x] **Semantik AST Motoru (Faz 4.1):** `wasmtime` tabanlı `LangPlugin` altyapısı sayesinde eklenti tabanlı AST formatında merge yeteneği.
+- [x] **Rust Semantik Eklentisi (Faz 4.2):** `rs.thing` referans eklentisi ile Rust dosyaları için öğe bazlı (fonksiyon, struct) akıllı birleştirme. ✅
 
 ## 📦 Kurulum & Kullanım
 

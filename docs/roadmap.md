@@ -198,10 +198,10 @@ Takım çalışması tam         Bireysel/ajans kullanımı
 
 ### 4.2 `rs.thing` — Referans Implementasyon (Açık Kaynak)
 *Topluluk "kendi dilim için nasıl yazarım?" diye sorduğunda cevap bu.*
-- [ ] tree-sitter-rust grammar + LangPlugin wrapper
-- [ ] Fonksiyon/sınıf bazlı diff, scope-aware merge
-- [ ] "Taşındı" vs "içeriği değişti" ayrımı
-- [ ] **Güvenlik kuralı:** belirsiz durumda → 3-way merge'e düş (fail-safe)
+- [x] syn + prettyplease (pure Rust AST) implementasyonu ✅
+- [x] Fonksiyon/sınıf bazlı diff, scope-aware merge ✅
+- [x] Wasm ABI üzerinden host-plugin iletişimi ✅
+- [x] İlk başarılı semantik merge testi (Rust functions) ✅
 - [ ] Tam test suite — diğer `*.thing` eklentileri için referans testler
 
 ### 4.3 Resmi Dil Eklentileri (Somewhere tarafından bakımı)
