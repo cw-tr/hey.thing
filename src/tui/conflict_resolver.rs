@@ -9,6 +9,9 @@ use crossterm::{
     execute,
     terminal::{disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen},
 };
+use ratatui::text::{Line, Span};
+use ratatui::style::{Color, Style};
+use similar::{Algorithm, ChangeTag, TextDiff};
 use std::io;
 
 pub struct ConflictResult {
@@ -74,10 +77,13 @@ pub fn resolve_conflict_interactive(
 fn run_app<B: ratatui::backend::Backend>(
     terminal: &mut Terminal<B>,
     path: &str,
-    _base: &str,
+    base: &str,
     local: &str,
     remote: &str,
 ) -> io::Result<char> {
+    let local_lines = generate_diff_text(base, local);
+    let remote_lines = generate_diff_text(base, remote);
+
     loop {
         terminal.draw(|f| {
             let chunks = Layout::default()
@@ -100,14 +106,14 @@ fn run_app<B: ratatui::backend::Backend>(
                 .constraints([Constraint::Percentage(50), Constraint::Percentage(50)])
                 .split(chunks[1]);
 
-            let local_view = Paragraph::new(local)
+            let local_view = Paragraph::new(local_lines.clone())
                 .block(Block::default().title(" [L] Sizin Değişikliğiniz (LOCAL) ").borders(Borders::ALL))
-                .wrap(Wrap { trim: true });
+                .wrap(Wrap { trim: false });
             f.render_widget(local_view, body_chunks[0]);
 
-            let remote_view = Paragraph::new(remote)
+            let remote_view = Paragraph::new(remote_lines.clone())
                 .block(Block::default().title(" [R] Uzaktaki Değişiklik (REMOTE) ").borders(Borders::ALL))
-                .wrap(Wrap { trim: true });
+                .wrap(Wrap { trim: false });
             f.render_widget(remote_view, body_chunks[1]);
 
             // Footer
@@ -125,4 +131,32 @@ fn run_app<B: ratatui::backend::Backend>(
             }
         }
     }
+}
+
+fn generate_diff_text<'a>(base: &'a str, target: &'a str) -> Vec<Line<'a>> {
+    let diff = TextDiff::configure()
+        .algorithm(Algorithm::Myers)
+        .diff_lines(base, target);
+
+    let mut lines = Vec::new();
+    for change in diff.iter_all_changes() {
+        let (sign, style) = match change.tag() {
+            ChangeTag::Delete => ("- ", Style::default().fg(Color::Red)),
+            ChangeTag::Insert => ("+ ", Style::default().fg(Color::Green)),
+            ChangeTag::Equal => ("  ", Style::default().fg(Color::Gray)),
+        };
+        
+        lines.push(Line::from(vec![
+            Span::styled(sign, style),
+            Span::styled(change.value().trim_end(), style),
+        ]));
+    }
+    
+    if lines.is_empty() && !target.is_empty() {
+        for line in target.lines() {
+            lines.push(Line::from(vec![Span::raw(line)]));
+        }
+    }
+
+    lines
 }

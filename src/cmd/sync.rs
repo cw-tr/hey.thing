@@ -1,7 +1,7 @@
 use anyhow::{Result, anyhow};
 use crate::core::verb_plugin::{VerbPlugin, ThingContext};
 use crate::storage::kv_store::KvStore;
-use crate::core::sync::{find_common_ancestor, compute_delta, apply_checkout};
+use crate::core::sync::{compute_delta, apply_checkout};
 use crate::core::object_model::Commit;
 use std::fs;
 use std::path::Path;
@@ -98,6 +98,12 @@ fn sync_to_target(ctx: &ThingContext, target: &str) -> Result<()> {
         println!("Senkronizasyon (push) başlıyor...");
         let delta = compute_delta(local_store, &local_head, ancestor.as_deref())?;
         
+        let total_blobs = delta.blobs.len();
+        let total_trees = delta.trees.len();
+        let total_commits = delta.commits.len();
+        println!("  [+] {} commit, {} ağaç, {} blob aktarılıyor...", total_commits, total_trees, total_blobs);
+        println!("  [+] Aktarılacak paket boyutu: ~{} KB", (total_blobs + total_trees + total_commits) * 4); // Yaklaşık
+
         for (hash, data) in delta.blobs { remote_store.put(hash.as_bytes(), &data)?; }
         for (hash, data) in delta.trees { remote_store.put(hash.as_bytes(), &data)?; }
         for (hash, data) in delta.commits { remote_store.put(hash.as_bytes(), &data)?; }

@@ -22,8 +22,8 @@ fn test_signature_flow() {
 #[test]
 fn test_3way_merge_auto() {
     let base = "line1\nline2\nline3\n";
-    let local = "line1\nline2-changed\nline3\n";
-    let remote = "line1\nline2\nline3-changed\n";
+    let _local = "line1\nline2-changed\nline3\n";
+    let _remote = "line1\nline2\nline3-changed\n";
     
     // Şu anki implementasyonumuz tam satır bazlı merge yapmıyor, 
     // ama en azından statik durumları doğru yönetmeli.
@@ -48,8 +48,8 @@ fn test_3way_merge_conflict() {
     let (result, has_conflict) = merge_content_3way(base, local, remote);
     
     assert!(has_conflict, "Farklı değişiklikler çakışma üretmeli");
-    assert!(result.contains("<<<<<<<< YOURS"));
+    assert!(result.contains("<<<<<<< YOURS (LOCAL)"));
     assert!(result.contains("changed-a"));
     assert!(result.contains("changed-b"));
-    assert!(result.contains(">>>>>>>> THEIRS"));
+    assert!(result.contains(">>>>>>> THEIRS (REMOTE)"));
 }
