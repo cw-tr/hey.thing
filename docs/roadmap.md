@@ -141,8 +141,12 @@ Takım çalışması tam         Bireysel/ajans kullanımı
 **Hedef:** İki kişi birlikte çalışabilsin
 
 ### 3.1 Sync Protokolü Tasarımı
-- [x] Delta transfer: son ortak ancestor'dan itibaren sadece değişen chunk'lar (JSON ve HTTP proxy üzerinden)
+- [x] Delta transfer: son ortak ancestor'dan itibaren sadece değişen chunk'lar (JSON ve HTTP üzerinden)
 - [x] Push ve Pull (Get) İstemci Mantığı: Uzak Hub üzerinden (`hey sync` ve `hey get` komutları)
+- [x] Somewhere Hub: Dinamik URL routing (`/:namespace/:repo/api/...`)
+- [x] Somewhere Hub: Systemd servis yapılandırması ve izolasyon (`somewhere` kullanıcısı)
+- [x] Somewhere Hub: Minimalist Dashboard (Repo listesi ve durum takibi)
+- [x] High-Capacity Transfer: Request body limit artırımı (100MB desteği)
 - [ ] Protokol: HTTPS üzerinden msgpack binary format (Şimdilik JSON/HTTP prototip yapıldı, msgpack Faz 4'e kalabilir)
 - [x] Distributed conflict: yerel tespit, çatışma uyarısı (`hey sync` içinde uygulanıyor)
 - [ ] CRDT/OT bu fazda yok — karmaşıklık faydasını aşar

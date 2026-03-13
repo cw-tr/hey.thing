@@ -154,10 +154,6 @@ fn sync_via_http(ctx: &ThingContext, url: &str) -> Result<()> {
 
     println!("{} sunucusuna bağlanılıyor...", url);
     
-    // Şimdilik test amaçlı her zaman "test_project" ismiyle repo adı atıyoruz
-    // Prod'da namespace/proje-adi urlden çekilir
-    let repo_name = "test_project";
-
     let local_store = ctx.store.as_ref()
         .ok_or_else(|| anyhow!("Yerel repo başlatılmamış."))?;
 
@@ -171,13 +167,11 @@ fn sync_via_http(ctx: &ThingContext, url: &str) -> Result<()> {
 
     #[derive(serde::Serialize)]
     struct SyncRequest<'a> {
-        repo_name: &'a str,
         delta: DeltaPackage,
         local_head: &'a str,
     }
 
     let request_data = SyncRequest {
-        repo_name,
         delta,
         local_head: &local_head,
     };

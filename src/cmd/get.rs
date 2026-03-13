@@ -36,8 +36,6 @@ impl VerbPlugin for GetVerb {
 
         println!("{} sunucusuna bağlanılıyor...", url);
 
-        let repo_name = "test_project"; // Şimdilik hardcoded HTTP proxy prototype için
-
         let mut local_head = None;
         if let Some(_store) = &ctx.store {
             let head_path = std::path::Path::new(&ctx.repo_path).join("HEAD");
@@ -58,13 +56,11 @@ impl VerbPlugin for GetVerb {
         }
 
         #[derive(serde::Serialize)]
-        struct PullRequest<'a> {
-            repo_name: &'a str,
+        struct PullRequest {
             local_head: Option<String>,
         }
 
         let req_data = PullRequest {
-            repo_name,
             local_head: local_head.clone(),
         };
 

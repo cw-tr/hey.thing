@@ -48,10 +48,10 @@ hey save "İlk commit veritabanına kaydedildi"
 hey shift new test-dali
 
 # Hub sunucusuna senkronize et (push)
-hey sync http://somewhere.cw.tr
+hey sync http://somewhere.cw.tr/mukan/projem
 
 # Uzak sunucudaki güncellemeleri çek (pull/get)
-hey get http://somewhere.cw.tr
+hey get http://somewhere.cw.tr/mukan/projem
 ```
 
 ## 🏗️ Mimari Şema
