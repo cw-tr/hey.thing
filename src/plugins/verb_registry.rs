@@ -3,8 +3,12 @@ use std::collections::HashMap;
 
 const PROTECTED: &[&str] = &[
     "save", "shift", "sync", "undo", "rewind", "show", "init", "get", "branch", "import", "verb",
-    "plugin", "help",
+    "lang", "plugin", "help", "setup",
 ];
+
+pub fn is_protected(name: &str) -> bool {
+    PROTECTED.contains(&name)
+}
 
 pub struct VerbRegistry {
     verbs: HashMap<String, Box<dyn VerbPlugin>>,

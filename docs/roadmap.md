@@ -211,17 +211,11 @@ Takım çalışması tam         Bireysel/ajans kullanımı
 - [ ] Her eklenti `hey lang test <eklenti>` standardını geçmeli
 
 ### 4.4 `hey lang` + `hey verb` Komutları
-**Dil eklentileri:**
-- [ ] `hey lang add py.thing` — thing-langs registry'den indir
-- [ ] `hey lang add ./local.thing` — yerel/kurumsal eklenti
-- [ ] `hey lang list` — yüklü dil eklentileri + versiyon
-- [ ] `hey lang test py.thing` — standart test suite çalıştır
-
-**Verb eklentileri:**
-- [ ] `hey verb add merge.thing` — thing-verbs registry'den indir
-- [ ] `hey verb add ./deploy.thing` — kurumsal özel verb
-- [ ] `hey verb list` — yüklü verb'ler (built-in + topluluk, kaynak etiketiyle)
-- [ ] `hey verb remove merge.thing` — PROTECTED verb'ler kaldırılamaz
+- [x] `hey lang add py.thing` — eklenti kurulumu ✅
+- [x] `hey lang list` — yüklü dil eklentileri ✅
+- [x] `hey verb add ./deploy.thing` — yeni komut ekleme ✅
+- [x] `hey verb list` — yüklü verb'ler (PROTECTED kontrolüyle) ✅
+- [x] `hey verb remove` — eklenti silme ✅
 
 ### 4.5 TUI AST Conflict Asistanı
 - [ ] Terminal içinde ikiye bölünmüş görsel ekran (ratatui)
