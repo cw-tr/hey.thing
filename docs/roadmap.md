@@ -223,7 +223,7 @@ Takım çalışması tam         Bireysel/ajans kullanımı
 ### 4.5 TUI Conflict Asistanı
 - [x] Terminal içinde ikiye bölünmüş görsel ekran (ratatui) ✅
 - [x] Klavye kontrolleri (L: Local, R: Remote, Q: Quit) ✅
-- [ ] Ok tuşlarıyla "bunu seç / şunu seç / ikisini de al" (WIP)
+- [x] Ok tuşlarıyla "bunu seç / şunu seç / ikisini de al" (WIP) ✅
 - [x] Plugin'den gelen semantik açıklama: "Bu değişiklik: fonksiyon imzası güncellendi" (Faz 4.2 ile entegre) ✅
 
 ### 4.6 Binary File Lock
@@ -242,8 +242,8 @@ Takım çalışması tam         Bireysel/ajans kullanımı
 - [ ] `hey save --offline-cache` → seçili dal yerel kilitle
 
 ### 4.9 Teknik Borç & Cila (Option C & A)
-- [ ] **CI Pipeline Fix:** GitHub Actions üzerinde yerel DB bağımlılığı olan testlerin (local-only tests) ayıklanması ve "mock"lanması. ⚠️
-- [ ] **TUI Diff Highlighting:** Çatışma çözücüde satır bazlı renkli diff gösterimi (Option A). 🌈
+- [x] **CI Pipeline Fix:** GitHub Actions üzerinde yerel DB bağımlılığı olan testlerin (local-only tests) ayıklanması ve "mock"lanması. ✅
+- [x] **TUI Diff Highlighting:** Çatışma çözücüde satır bazlı renkli diff gösterimi (Option A). ✅ 🌈
 - [ ] **Code Coverage:** Test kapsamının %80 üzerine çıkarılması.
 - [x] **Documentation:** `hey.thing` eklenti geliştirme rehberi (LangPlugin tutorial). ✅
 
