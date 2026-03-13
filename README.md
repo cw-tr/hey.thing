@@ -32,7 +32,30 @@
 - [x] **Çakışma Toleransı ve Otomatik Merge:** `hey get` komutuyla veri çekilirken akıllı 3-Way merge yapılması (Diverge vs Fast-Forward algılama).
 - [x] **Semantik AST Motoru (Faz 4.1):** `wasmtime` tabanlı `LangPlugin` altyapısı sayesinde eklenti tabanlı AST formatında merge yeteneği.
 - [x] **Rust Semantik Eklentisi (Faz 4.2):** `rs.thing` referans eklentisi ile Rust dosyaları için öğe bazlı (fonksiyon, struct) akıllı birleştirme. ✅
+- [x] **Faz 4.4: Eklenti Yönetimi ve Katmanlı Arama** — `hey lang` ve `hey verb` komutları eklendi. Plugin'ler artık hem kullanıcı dizininden (`~/.something`) hem de sistem genelinden (binary yanındaki `langs|verbs` klasörleri) otomatik yükleniyor. 🚀
 
+## 📦 Kurulum ve Eklenti Yönetimi
+
+`hey.thing` eklentileri WebAssembly tabanlıdır (`.thing`) ve iki katmanlı bir arama mekanizmasıyla çalışır:
+
+1.  **Kullanıcı Katmanı:** `~/.something/langs/` ve `~/.something/verbs/`
+2.  **Sistem/Taşınabilir Katman:** `hey` binary'sinin bulunduğu dizindeki `langs/` ve `verbs/`
+
+### 🛠️ Eklenti Komutları
+
+```bash
+# Dil eklentilerini listele
+hey lang list
+
+# Yeni bir dil motoru (AST Merge) ekle
+hey lang add ./rs.thing
+
+# Komut eklentilerini yönet
+hey verb add ./deploy.thing
+hey verb list
+```
+
+---
 ## 📦 Kurulum & Kullanım
 
 Şu an geliştirme aşamasında olduğu için kaynak koddan derleyerek kullanabilirsiniz:
