@@ -16,16 +16,26 @@ pub struct DeltaPackage {
 /// İki branch arasındaki ortak ancestor'un (kesişim noktası) hash'ini bulur
 pub fn find_common_ancestor(
     store: &KvStore,
-    head_a: &str, // Lokalde bulunan
-    head_b: &str  // Uzaktan gelen
+    head_a: &str,
+    head_b: &str
+) -> Result<Option<String>> {
+    find_common_ancestor_cross(store, head_a, store, head_b)
+}
+
+pub fn find_common_ancestor_cross(
+    store_a: &KvStore,
+    head_a: &str,
+    store_b: &KvStore,
+    head_b: &str
 ) -> Result<Option<String>> {
     let mut history_a = HashSet::new();
     let mut current_a = head_a.to_string();
 
-    // 1. A dalının tüm geçmişini topla
+    // 1. A dalının tüm geçmişini topla (store_a kullanarak)
     loop {
+        if current_a.is_empty() { break; }
         history_a.insert(current_a.clone());
-        if let Some(json) = store.get(current_a.as_bytes())? {
+        if let Some(json) = store_a.get(current_a.as_bytes())? {
             let commit: Commit = serde_json::from_slice(&json)?;
             if let Some(parent) = commit.parent_id {
                 current_a = parent;
@@ -37,14 +47,15 @@ pub fn find_common_ancestor(
         }
     }
 
-    // 2. B dalında yukarı doğru çıkıp A'nın geçmişiyle ilk kesişimi bul
+    // 2. B dalında yukarı doğru çıkıp (store_b kullanarak) A'nın geçmişiyle ilk kesişimi bul
     let mut current_b = head_b.to_string();
     loop {
+        if current_b.is_empty() { break; }
         if history_a.contains(&current_b) {
             return Ok(Some(current_b));
         }
 
-        if let Some(json) = store.get(current_b.as_bytes())? {
+        if let Some(json) = store_b.get(current_b.as_bytes())? {
             let commit: Commit = serde_json::from_slice(&json)?;
             if let Some(parent) = commit.parent_id {
                 current_b = parent;
@@ -345,7 +356,7 @@ pub fn perform_merge(
         } else { String::new() };
 
         let mut has_conflict = false;
-        let final_content;
+        let mut final_content;
 
         if let Some(merger) = lang_registry.get_merger(&path) {
             match merger.merge(&base_data, &local_data, &remote_data) {
@@ -366,7 +377,20 @@ pub fn perform_merge(
         }
         
         if has_conflict {
-            println!("  [!] ÇAKIŞMA (Conflict): {}", path);
+            println!("  [!] ÇAKIŞMA (Conflict): {}. Görsel asistan başlatılıyor...", path);
+            match crate::tui::conflict_resolver::resolve_conflict_interactive(&path, &base_data, &local_data, &remote_data) {
+                Ok(res) => {
+                    if res.resolved {
+                        final_content = res.content;
+                        println!("  [+] Görsel asistan ile çözüldü: {}", path);
+                    } else {
+                        println!("  [!] Çatışma çözülmedi, çakışma işaretçileriyle kaydediliyor: {}", path);
+                    }
+                }
+                Err(e) => {
+                    eprintln!("  [!] TUI Başlatılamadı: {}. Klasik modla devam ediliyor.", e);
+                }
+            }
         } else {
             println!("  [+] Birleştirildi: {}", path);
         }

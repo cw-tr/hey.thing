@@ -92,7 +92,7 @@ fn sync_to_target(ctx: &ThingContext, target: &str) -> Result<()> {
     let local_head = read_head_hash(&ctx.repo_path)?;
     let remote_head = read_head_hash(target_repo.to_str().unwrap())?;
 
-    let ancestor = find_common_ancestor(local_store, &local_head, &remote_head)?;
+    let ancestor = crate::core::sync::find_common_ancestor_cross(local_store, &local_head, &remote_store, &remote_head)?;
 
     if ancestor.as_deref() == Some(&remote_head) || remote_head.is_empty() {
         println!("Senkronizasyon (push) başlıyor...");
@@ -113,22 +113,35 @@ fn sync_to_target(ctx: &ThingContext, target: &str) -> Result<()> {
         for (hash, data) in delta.blobs { local_store.put(hash.as_bytes(), &data)?; }
         for (hash, data) in delta.trees { local_store.put(hash.as_bytes(), &data)?; }
         for (hash, data) in delta.commits { local_store.put(hash.as_bytes(), &data)?; }
-        let remote_commit: Commit = serde_json::from_slice(&local_store.get(remote_head.as_bytes())?.unwrap())?;
+        let remote_commit_data = local_store.get(remote_head.as_bytes())?
+            .ok_or_else(|| anyhow!("Uzak commit objesi yerel depoda bulunamadı: {}", remote_head))?;
+        let remote_commit: Commit = serde_json::from_slice(&remote_commit_data)?;
         let work_dir = Path::new(&ctx.repo_path).parent().unwrap();
         apply_checkout(local_store, &remote_commit.tree_hash, work_dir)?;
         overwrite_remote_head(&ctx.repo_path, &remote_head)?;
         println!("Yerel depo güncellendi: {}", remote_head);
 
     } else {
-        println!("ÇATIŞMA: Her iki depo da farklı yönlere evrilmiş. 3-way merge deneniyor...");
-        crate::core::sync::perform_merge(
-            local_store,
-            std::path::Path::new(&ctx.repo_path).parent().unwrap(),
-            &local_head,
-            &remote_head,
-            &ancestor.unwrap()
-        )?;
-        println!("Merge işlemi tamamlandı. Lütfen kontrol edip save yapın.");
+        if let Some(anc) = ancestor {
+            println!("ÇATIŞMA: Her iki depo da farklı yönlere evrilmiş. 3-way merge deneniyor...");
+            
+            // Merge öncesi remote'daki verileri yerel store'a çekmeliyiz ki merge işlemi yapabilsin
+            let delta = compute_delta(&remote_store, &remote_head, Some(&anc))?;
+            for (hash, data) in delta.blobs { local_store.put(hash.as_bytes(), &data)?; }
+            for (hash, data) in delta.trees { local_store.put(hash.as_bytes(), &data)?; }
+            for (hash, data) in delta.commits { local_store.put(hash.as_bytes(), &data)?; }
+
+            crate::core::sync::perform_merge(
+                local_store,
+                std::path::Path::new(&ctx.repo_path).parent().unwrap(),
+                &local_head,
+                &remote_head,
+                &anc
+            )?;
+            println!("Merge işlemi tamamlandı. Lütfen kontrol edip save yapın.");
+        } else {
+            return Err(anyhow!("Ortak ata (common ancestor) bulunamadı. Develer ayrı yönlere gitmiş, otomatik merge imkansız."));
+        }
     }
 
     Ok(())

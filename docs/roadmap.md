@@ -161,13 +161,14 @@ Takım çalışması tam         Bireysel/ajans kullanımı
 [YOURS]  fn authenticate(user: &User) -> Result<bool>
 ~~~ END CONFLICT ~~~
 ```
-- [ ] TUI conflict resolver (ratatui)
-- [ ] `hey sync` → conflict varsa TUI aç
+- [x] TUI conflict resolver (ratatui) ✅ (Side-by-side view)
+- [x] `hey sync` → conflict varsa TUI aç ✅
 
 ### 3.3 Hub Authentication
 - [x] `hey init` → ed25519 anahtar çifti üretimi (`~/.something/keys/`)
 - [x] Hub tarafında ilk push'ta Public Key kaydı (Namespace kilitlenme)
 - [x] Her sync işleminde ed25519-dalek ile dijital imza doğrulaması
+- [x] SSL ve Güvenlik: Let's Encrypt + Apache Reverse Proxy ile HTTPS zorunlu hale getirildi ✅
 - [ ] OAuth2 hızlı giriş ve Token yönetimi (Faz 4/5)
 
 ### 3.4 Clone + Push/Fetch
@@ -219,10 +220,11 @@ Takım çalışması tam         Bireysel/ajans kullanımı
 - [x] `hey verb remove` — eklenti silme ✅
 - [x] **Katmanlı Arama:** Plugin'ler hem `~/.something` hem de binary yanındaki `langs|verbs` klasörlerinden yükleniyor (Binary-Relative Search) ✅
 
-### 4.5 TUI AST Conflict Asistanı
-- [ ] Terminal içinde ikiye bölünmüş görsel ekran (ratatui)
-- [ ] Ok tuşlarıyla "bunu seç / şunu seç / ikisini de al"
-- [ ] Plugin'den gelen semantik açıklama: "Bu değişiklik: fonksiyon imzası güncellendi"
+### 4.5 TUI Conflict Asistanı
+- [x] Terminal içinde ikiye bölünmüş görsel ekran (ratatui) ✅
+- [x] Klavye kontrolleri (L: Local, R: Remote, Q: Quit) ✅
+- [ ] Ok tuşlarıyla "bunu seç / şunu seç / ikisini de al" (WIP)
+- [x] Plugin'den gelen semantik açıklama: "Bu değişiklik: fonksiyon imzası güncellendi" (Faz 4.2 ile entegre) ✅
 
 ### 4.6 Binary File Lock
 - [ ] Hub üzerinde dosya kilitleme API'si
@@ -238,6 +240,12 @@ Takım çalışması tam         Bireysel/ajans kullanımı
 - [ ] Lazy-load: checkout'ta sadece çalışma dizini indirilir
 - [ ] On-demand fetch: eski dosya açılınca arka planda çek
 - [ ] `hey save --offline-cache` → seçili dal yerel kilitle
+
+### 4.9 Teknik Borç & Cila (Option C & A)
+- [ ] **CI Pipeline Fix:** GitHub Actions üzerinde yerel DB bağımlılığı olan testlerin (local-only tests) ayıklanması ve "mock"lanması. ⚠️
+- [ ] **TUI Diff Highlighting:** Çatışma çözücüde satır bazlı renkli diff gösterimi (Option A). 🌈
+- [ ] **Code Coverage:** Test kapsamının %80 üzerine çıkarılması.
+- [ ] **Documentation:** `hey.thing` eklenti geliştirme rehberi (LangPlugin tutorial).
 
 **Faz 4 Çıktısı:** hey.thing gerçek rekabet avantajına kavuştu. Modüler verb + dil ekosistemi tam çalışıyor. Topluluk kendi `*.thing` verb ve dil eklentilerini yazabilir.
 
@@ -321,3 +329,4 @@ TOPLAM  → ~15 ay    → Tam özellikli, topluluk ekosistemli VCS motoru
 - [ ] **Faz 4 sonrası:** Sled → RocksDB migration (production ölçeği)
 - [ ] **Faz 5 öncesi:** Penetration test (üçüncü taraf)
 - [ ] **Sürekli:** Her fazda `hey import --from-git` regression suite
+- [ ] **CI Pipeline Fix:** GitHub Actions üzerinde yerel DB bağımlılığı olan testlerin (local-only tests) ayıklanması ve "mock"lanması gerekiyor. Şimdilik pas geçildi. ⚠️

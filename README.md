@@ -29,7 +29,9 @@
 - [x] **Zaman Makinesi:** `hey rewind` ve `hey undo`
 - [x] **Git Göçü (Migration):** `hey import --from-git` (Mevcut git objelerini içeri aktarır)
 - [x] **Delta Senkronizasyon:** `hey sync` ve `hey get` komutlarıyla Uzak HTTP Hub'lara doğrudan push/pull yapabilme.
-- [x] **Çakışma Toleransı ve Otomatik Merge:** `hey get` komutuyla veri çekilirken akıllı 3-Way merge yapılması (Diverge vs Fast-Forward algılama).
+- [x] **Çakışma Toleransı ve Otomatik Merge:** `hey sync` ve `hey get` komutlarıyla veri çekilirken akıllı 3-Way merge yapılması (Diverge vs Fast-Forward algılama).
+- [x] **TUI Çakışma Çözücü (Faz 3.2):** Çatışma durumunda `ratatui` tabanlı interaktif, ikiye bölünmüş (split-view) terminal arayüzü ile yerel/uzak değişiklikleri seçebilme. ✅
+- [x] **Platform Güvenliği & Hub (Somewhere):** Crawler'lara karşı otomatik repo oluşumunu engelleyen koruma ve SSL/HTTPS yönlendirmeleriyle güvenli VCS Hub deneyimi. 🛡️
 - [x] **Semantik AST Motoru (Faz 4.1):** `wasmtime` tabanlı `LangPlugin` altyapısı sayesinde eklenti tabanlı AST formatında merge yeteneği.
 - [x] **Rust Semantik Eklentisi (Faz 4.2):** `rs.thing` referans eklentisi ile Rust dosyaları için öğe bazlı (fonksiyon, struct) akıllı birleştirme. ✅
 - [x] **Faz 4.4: Eklenti Yönetimi ve Katmanlı Arama** — `hey lang` ve `hey verb` komutları eklendi. Plugin'ler artık hem kullanıcı dizininden (`~/.something`) hem de sistem genelinden (binary yanındaki `langs|verbs` klasörleri) otomatik yükleniyor. 🚀
