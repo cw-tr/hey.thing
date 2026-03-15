@@ -30,12 +30,7 @@ impl VerbRegistry {
     }
 
     pub fn find(&self, name: &str) -> Option<&dyn VerbPlugin> {
-        self.verbs.get(name).map(|v| v.as_ref()).or_else(|| {
-            self.verbs
-                .values()
-                .find(|v| v.aliases().contains(&name))
-                .map(|v| v.as_ref())
-        })
+        self.verbs.get(name).map(|v| v.as_ref())
     }
 
     pub fn list_help(&self) {

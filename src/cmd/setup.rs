@@ -16,10 +16,6 @@ impl VerbPlugin for SetupVerb {
         "setup"
     }
 
-    fn aliases(&self) -> &[&str] {
-        &[]
-    }
-
     fn help(&self) -> &str {
         "Kurulum ve güvenlik yapılandırma ayarlarını yönetir (örn: setup trust)"
     }

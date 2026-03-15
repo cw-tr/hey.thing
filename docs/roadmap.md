@@ -226,20 +226,21 @@ Takım çalışması tam         Bireysel/ajans kullanımı
 - [x] Ok tuşlarıyla "bunu seç / şunu seç / ikisini de al" (WIP) ✅
 - [x] Plugin'den gelen semantik açıklama: "Bu değişiklik: fonksiyon imzası güncellendi" (Faz 4.2 ile entegre) ✅
 
-### 4.6 Binary File Lock
-- [ ] Hub üzerinde dosya kilitleme API'si
-- [ ] `hey show` → "Ahmet model.blend'i kilitli tutuyor"
-- [ ] Kilitli dosyayı değiştirince uyarı (engelleme değil)
+### 4.6 Binary File Lock ✅
+- [x] Hub üzerinde dosya kilitleme API'si (lock/unlock/list) ✅
+- [x] `hey show` → Aktif kilitlerin listelenmesi ✅
+- [x] `hey save` → Kilitli dosyayı değiştirince uyarı sistemi ✅
+- [x] `hey lock <path>` ve `hey unlock <path>` komutları ✅
 
-### 4.7 Git Migration — Tam Versiyon
-- [ ] Annotated tag, submodule, LFS pointer desteği
-- [ ] Streaming import: 16GB+ `.git` klasörleri
+### 4.7 Git Migration — Tam Versiyon (WIP)
+- [x] Annotated tag, branch ve commit geçmişi aktarımı ✅
+- [x] Streaming import: `cat-file --batch` ve log streaming mimarisi ✅
 - [ ] Hedef: linux kernel repo (~4M commit) 30 dakikada
 
-### 4.8 VFS — Sanal Dosya Sistemi
-- [ ] Lazy-load: checkout'ta sadece çalışma dizini indirilir
-- [ ] On-demand fetch: eski dosya açılınca arka planda çek
-- [ ] `hey save --offline-cache` → seçili dal yerel kilitle
+### 4.8 VFS — Sanal Dosya Sistemi ✅
+- [x] Lazy-load: checkout'ta sadece çalışma dizini indirilir ✅
+- [x] On-demand fetch: nesneyi Hub üzerinden otomatik çek mimarisi ✅
+- [x] `hey save --offline-cache` → tüm geçmişi yerel depoya kilitle ✅
 
 ### 4.9 Teknik Borç & Cila (Option C & A)
 - [x] **CI Pipeline Fix:** GitHub Actions üzerinde yerel DB bağımlılığı olan testlerin (local-only tests) ayıklanması ve "mock"lanması. ✅

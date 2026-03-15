@@ -1,4 +1,4 @@
-use crate::core::object_model::{Commit, Tree};
+use crate::core::object_model::Commit;
 use crate::core::verb_plugin::{ThingContext, VerbPlugin};
 use anyhow::{Result, anyhow};
 use std::fs;
@@ -15,10 +15,6 @@ impl ShiftVerb {
 impl VerbPlugin for ShiftVerb {
     fn name(&self) -> &str {
         "shift"
-    }
-
-    fn aliases(&self) -> &[&str] {
-        &[]
     }
 
     fn help(&self) -> &str {
@@ -82,9 +78,10 @@ impl VerbPlugin for ShiftVerb {
             return Ok(());
         }
 
-        let target = args.first().unwrap();
+        let is_lazy = args.contains(&"--lazy".to_string());
+        let target = args.iter().find(|a| !a.starts_with("--")).ok_or_else(|| anyhow!("Hedef belirtilmedi."))?;
 
-        let store = ctx
+        let _store = ctx
             .store
             .as_ref()
             .ok_or_else(|| anyhow!("Repo başlatılmamış."))?;
@@ -100,46 +97,18 @@ impl VerbPlugin for ShiftVerb {
         };
 
         // Commit'i doğrula
-        let commit_data = store
-            .get(commit_hash.as_bytes())?
-            .ok_or_else(|| anyhow!("Commit bulunamadı: {}", commit_hash))?;
-        let commit: Commit = serde_json::from_slice(&commit_data)?;
-
-        // Tree'yi al ve dosyaları geri yükle (Basit çalışma dizini güncelleme)
-        let tree_data = store
-            .get(commit.tree_hash.as_bytes())?
-            .ok_or_else(|| anyhow!("Ağaç bulunamadı: {}", commit.tree_hash))?;
-        let tree: Tree = serde_json::from_slice(&tree_data)?;
-
-        // TODO: Silinmesi gereken dosyaları temizle (Faz 2 gelişmiş checkout)
-        for entry in tree.entries {
-            if !entry.is_dir {
-                let content = if entry.is_chunked {
-                    let mut data = Vec::new();
-                    if let Some(chunks) = entry.chunks {
-                        for chunk_hash in chunks {
-                            let compressed_chunk = store
-                                .get(chunk_hash.as_bytes())?
-                                .ok_or_else(|| anyhow!("Chunk bulunamadı: {}", chunk_hash))?;
-                            let decompressed =
-                                crate::storage::compression::decompress(&compressed_chunk)?;
-                            data.extend(decompressed);
-                        }
-                    }
-                    data
-                } else {
-                    let compressed_blob = store
-                        .get(entry.hash.as_bytes())?
-                        .ok_or_else(|| anyhow!("Dosya içeriği bulunamadı: {}", entry.hash))?;
-                    crate::storage::compression::decompress(&compressed_blob)?
-                };
-
-                let path = Path::new(&entry.name);
-                if let Some(parent) = path.parent() {
-                    fs::create_dir_all(parent)?;
-                }
-                fs::write(path, content)?;
-            }
+        let commit_data = ctx.get_object(&commit_hash)?;
+        let decompressed = crate::storage::compression::decompress(&commit_data)?;
+        let commit: Commit = bincode::deserialize(&decompressed)?;
+ 
+        // Tree'yi al ve dosyaları geri yükle (Rekürsif Checkout)
+        let work_dir = Path::new(&ctx.repo_path).parent().unwrap_or(Path::new("."));
+        
+        if is_lazy {
+            println!("👻 Ghost Checkout (Lazy) başlatılıyor...");
+            recursive_ghost_checkout(ctx, &commit.tree_hash, work_dir)?;
+        } else {
+            recursive_checkout(ctx, &commit.tree_hash, work_dir)?;
         }
 
         // HEAD'i güncelle
@@ -153,4 +122,86 @@ impl VerbPlugin for ShiftVerb {
         println!("'{}' konumuna geçildi (Commit: {}).", target, commit_hash);
         Ok(())
     }
+}
+
+fn recursive_ghost_checkout(ctx: &ThingContext, tree_hash: &str, current_path: &Path) -> Result<()> {
+    use crate::core::object_model::{Tree, EntryType};
+    let tree_data = ctx.get_object(tree_hash)?;
+    let decompressed = crate::storage::compression::decompress(&tree_data)?;
+    let tree: Tree = bincode::deserialize(&decompressed)?;
+
+    for entry in tree.entries {
+        if entry.name == ".configthing" || entry.name == ".something" {
+            continue;
+        }
+        let entry_path = current_path.join(&entry.name);
+        match entry.entry_type {
+            EntryType::Blob | EntryType::Delta => {
+                if let Some(parent) = entry_path.parent() {
+                    std::fs::create_dir_all(parent)?;
+                }
+                // Ghost file: 0 byte. Content will be hydrated later.
+                std::fs::write(&entry_path, "")?;
+                
+                #[cfg(unix)]
+                {
+                    use std::os::unix::fs::PermissionsExt;
+                    std::fs::set_permissions(&entry_path, std::fs::Permissions::from_mode(entry.mode))?;
+                }
+            }
+            EntryType::Tree => {
+                fs::create_dir_all(&entry_path)?;
+                recursive_ghost_checkout(ctx, &entry.hash, &entry_path)?;
+            }
+        }
+    }
+    Ok(())
+}
+
+fn recursive_checkout(ctx: &ThingContext, tree_hash: &str, current_path: &Path) -> Result<()> {
+    use crate::core::object_model::{Tree, EntryType};
+    let tree_data = ctx.get_object(tree_hash)?;
+    let decompressed = crate::storage::compression::decompress(&tree_data)?;
+    let tree: Tree = bincode::deserialize(&decompressed)?;
+
+    for entry in tree.entries {
+        if entry.name == ".configthing" || entry.name == ".something" {
+            continue;
+        }
+        let entry_path = current_path.join(&entry.name);
+        match entry.entry_type {
+            EntryType::Blob | EntryType::Delta => {
+                let content = if entry.is_chunked {
+                    let mut data = Vec::new();
+                    if let Some(chunks) = entry.chunks {
+                        for chunk_hash in chunks {
+                            let compressed_chunk = ctx.get_object(&chunk_hash)?;
+                            let decompressed = crate::storage::compression::decompress(&compressed_chunk)?;
+                            data.extend(decompressed);
+                        }
+                    }
+                    data
+                } else {
+                    ctx.get_reconstructed_blob(&entry.hash, &entry.entry_type)?
+                };
+
+                if let Some(parent) = entry_path.parent() {
+                    std::fs::create_dir_all(parent)?;
+                }
+                std::fs::write(&entry_path, content)?;
+
+                // File mode support
+                #[cfg(unix)]
+                {
+                    use std::os::unix::fs::PermissionsExt;
+                    std::fs::set_permissions(&entry_path, std::fs::Permissions::from_mode(entry.mode))?;
+                }
+            }
+            EntryType::Tree => {
+                fs::create_dir_all(&entry_path)?;
+                recursive_checkout(ctx, &entry.hash, &entry_path)?;
+            }
+        }
+    }
+    Ok(())
 }

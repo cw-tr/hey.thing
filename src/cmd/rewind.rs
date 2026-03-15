@@ -16,10 +16,6 @@ impl VerbPlugin for RewindVerb {
         "rewind"
     }
 
-    fn aliases(&self) -> &[&str] {
-        &[]
-    }
-
     fn help(&self) -> &str {
         "Zamanı geri sarar (ID veya zaman bazlı)"
     }

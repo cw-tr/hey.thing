@@ -16,10 +16,6 @@ impl VerbPlugin for GetVerb {
         "get"
     }
 
-    fn aliases(&self) -> &[&str] {
-        &["pull"]
-    }
-
     fn help(&self) -> &str {
         "Uzak depodan güncellemeleri veya tüm repoyu çeker (clone/pull)"
     }
@@ -122,7 +118,9 @@ impl VerbPlugin for GetVerb {
                 
                 if ancestor.as_deref() == Some(&l_head) {
                     println!("🚀 Fast-Forward tespit edildi. Çalışma dizini güncelleniyor...");
-                    let remote_commit: Commit = serde_json::from_slice(&store.get(remote_head.as_bytes())?.unwrap())?;
+                    let commit_data = store.get(remote_head.as_bytes())?.unwrap();
+                    let decompressed = crate::storage::compression::decompress(&commit_data)?;
+                    let remote_commit: Commit = bincode::deserialize(&decompressed)?;
                     apply_checkout(store, &remote_commit.tree_hash, std::path::Path::new(&ctx.repo_path).parent().unwrap())?;
                 } else if ancestor.as_deref() == Some(remote_head) {
                     println!("✨ Yerel depo zaten daha güncel.");
@@ -132,13 +130,17 @@ impl VerbPlugin for GetVerb {
                     println!("📢 Merge tamamlandı. Çatışmaları kontrol edip `hey save` yapmayı unutmayın.");
                 } else {
                     println!("🌑 Ortak geçmiş bulunamadı. Temiz checkout yapılıyor...");
-                    let remote_commit: Commit = serde_json::from_slice(&store.get(remote_head.as_bytes())?.unwrap())?;
+                    let commit_data = store.get(remote_head.as_bytes())?.unwrap();
+                    let decompressed = crate::storage::compression::decompress(&commit_data)?;
+                    let remote_commit: Commit = bincode::deserialize(&decompressed)?;
                     apply_checkout(store, &remote_commit.tree_hash, std::path::Path::new(&ctx.repo_path).parent().unwrap())?;
                 }
             } else {
                 // İlk defa çekiliyor (Clone benzeri)
                 println!("📦 İlk çekim yapılıyor. Dosyalar çıkarılıyor...");
-                let remote_commit: Commit = serde_json::from_slice(&store.get(remote_head.as_bytes())?.unwrap())?;
+                let commit_data = store.get(remote_head.as_bytes())?.unwrap();
+                let decompressed = crate::storage::compression::decompress(&commit_data)?;
+                let remote_commit: Commit = bincode::deserialize(&decompressed)?;
                 apply_checkout(store, &remote_commit.tree_hash, std::path::Path::new(&ctx.repo_path).parent().unwrap())?;
             }
 

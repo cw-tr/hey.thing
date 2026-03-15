@@ -17,10 +17,6 @@ impl VerbPlugin for VerbVerb {
         "verb"
     }
 
-    fn aliases(&self) -> &[&str] {
-        &["plugin"]
-    }
-
     fn help(&self) -> &str {
         "Komut eklentilerini yönetir: add, list, remove"
     }

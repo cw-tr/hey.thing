@@ -19,10 +19,6 @@ impl VerbPlugin for SyncVerb {
         "sync"
     }
 
-    fn aliases(&self) -> &[&str] {
-        &[]
-    }
-
     fn help(&self) -> &str {
         "Uzak veya yerel depo ile senkronize olur. Argümansız kullanımda configdeki tüm hedeflere (backup, remote) sırayla aktarır."
     }
@@ -121,7 +117,8 @@ fn sync_to_target(ctx: &ThingContext, target: &str) -> Result<()> {
         for (hash, data) in delta.commits { local_store.put(hash.as_bytes(), &data)?; }
         let remote_commit_data = local_store.get(remote_head.as_bytes())?
             .ok_or_else(|| anyhow!("Uzak commit objesi yerel depoda bulunamadı: {}", remote_head))?;
-        let remote_commit: Commit = serde_json::from_slice(&remote_commit_data)?;
+        let decompressed = crate::storage::compression::decompress(&remote_commit_data)?;
+        let remote_commit: Commit = bincode::deserialize(&decompressed)?;
         let work_dir = Path::new(&ctx.repo_path).parent().unwrap();
         apply_checkout(local_store, &remote_commit.tree_hash, work_dir)?;
         overwrite_remote_head(&ctx.repo_path, &remote_head)?;
@@ -204,8 +201,8 @@ fn sync_via_http(ctx: &ThingContext, url: &str) -> Result<()> {
 
     let signing_key = KeyManager::get_or_create_key()?;
     let public_key_hex = hex::encode(signing_key.verifying_key().to_bytes());
-    let delta_json = serde_json::to_vec(&delta)?;
-    let delta_hash = crate::crypto::hash::hash_data(&delta_json);
+    let bincode_data = bincode::serialize(&delta)?;
+    let delta_hash = crate::crypto::hash::hash_data(&bincode_data);
     let sign_payload = format!("{}:{}", local_head, delta_hash);
     let signature = KeyManager::sign(sign_payload.as_bytes())?;
 

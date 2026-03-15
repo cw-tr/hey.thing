@@ -35,8 +35,9 @@ pub fn find_common_ancestor_cross(
     loop {
         if current_a.is_empty() { break; }
         history_a.insert(current_a.clone());
-        if let Some(json) = store_a.get(current_a.as_bytes())? {
-            let commit: Commit = serde_json::from_slice(&json)?;
+        if let Some(bin) = store_a.get(current_a.as_bytes())? {
+            let decompressed = crate::storage::compression::decompress(&bin)?;
+            let commit: Commit = bincode::deserialize(&decompressed)?;
             if let Some(parent) = commit.parent_id {
                 current_a = parent;
             } else {
@@ -55,8 +56,9 @@ pub fn find_common_ancestor_cross(
             return Ok(Some(current_b));
         }
 
-        if let Some(json) = store_b.get(current_b.as_bytes())? {
-            let commit: Commit = serde_json::from_slice(&json)?;
+        if let Some(bin) = store_b.get(current_b.as_bytes())? {
+            let decompressed = crate::storage::compression::decompress(&bin)?;
+            let commit: Commit = bincode::deserialize(&decompressed)?;
             if let Some(parent) = commit.parent_id {
                 current_b = parent;
             } else {
@@ -96,7 +98,8 @@ pub fn compute_delta(
         if let Some(commit_json) = store.get(current_hash.as_bytes())? {
             commits.push((current_hash.clone(), commit_json.clone()));
             
-            let commit: Commit = serde_json::from_slice(&commit_json)?;
+            let decompressed = crate::storage::compression::decompress(&commit_json)?;
+            let commit: Commit = bincode::deserialize(&decompressed)?;
             collect_tree_recursive(store, &commit.tree_hash, &mut trees, &mut blobs, &mut visited_trees, &mut visited_blobs)?;
 
             if let Some(parent) = commit.parent_id {
@@ -129,9 +132,10 @@ fn collect_tree_recursive(
         visited_trees.insert(tree_hash.to_string());
         trees.push((tree_hash.to_string(), tree_json.clone()));
 
-        let tree_obj: Tree = serde_json::from_slice(&tree_json)?;
+        let decompressed = crate::storage::compression::decompress(&tree_json)?;
+        let tree_obj: Tree = bincode::deserialize(&decompressed)?;
         for entry in tree_obj.entries {
-            if entry.is_dir {
+            if entry.entry_type == crate::core::object_model::EntryType::Tree {
                 collect_tree_recursive(store, &entry.hash, trees, blobs, visited_trees, visited_blobs)?;
             } else {
                 if !visited_blobs.contains(&entry.hash) {
@@ -168,7 +172,7 @@ pub fn apply_checkout(
     let files = list_files_flattened(store, tree_hash, "")?;
     
     // 1. Yeni tree'deki dosyaları yaz/güncelle
-    for (path, blob_hash) in &files {
+    for (path, (blob_hash, _entry_type, _depth)) in &files {
         let full_path = repo_root.join(path);
         
         let blob_data = store.get(blob_hash.as_bytes())?
@@ -321,9 +325,17 @@ pub fn perform_merge(
     remote_head: &str,
     ancestor: &str,
 ) -> Result<()> {
-    let base_commit: Commit = serde_json::from_slice(&store.get(ancestor.as_bytes())?.ok_or_else(|| anyhow::anyhow!("Base commit bulunamadı"))?)?;
-    let local_commit: Commit = serde_json::from_slice(&store.get(local_head.as_bytes())?.ok_or_else(|| anyhow::anyhow!("Local commit bulunamadı"))?)?;
-    let remote_commit: Commit = serde_json::from_slice(&store.get(remote_head.as_bytes())?.ok_or_else(|| anyhow::anyhow!("Remote commit bulunamadı"))?)?;
+    let base_commit_data = store.get(ancestor.as_bytes())?.ok_or_else(|| anyhow::anyhow!("Base commit bulunamadı"))?;
+    let base_commit_dec = crate::storage::compression::decompress(&base_commit_data)?;
+    let base_commit: Commit = bincode::deserialize(&base_commit_dec)?;
+
+    let local_commit_data = store.get(local_head.as_bytes())?.ok_or_else(|| anyhow::anyhow!("Local commit bulunamadı"))?;
+    let local_commit_dec = crate::storage::compression::decompress(&local_commit_data)?;
+    let local_commit: Commit = bincode::deserialize(&local_commit_dec)?;
+
+    let remote_commit_data = store.get(remote_head.as_bytes())?.ok_or_else(|| anyhow::anyhow!("Remote commit bulunamadı"))?;
+    let remote_commit_dec = crate::storage::compression::decompress(&remote_commit_data)?;
+    let remote_commit: Commit = bincode::deserialize(&remote_commit_dec)?;
 
     let candidates = find_merge_candidates(
         store,
@@ -361,7 +373,8 @@ pub fn perform_merge(
         if let Some(merger) = lang_registry.get_merger(&path) {
             match merger.merge(&base_data, &local_data, &remote_data) {
                 Ok(result) => {
-                    final_content = result;
+                    final_content = result.content;
+                    has_conflict = result.has_conflict;
                 }
                 Err(e) => {
                     println!("  [-] Olası AST Merging Hatası ({}): {}", merger.name(), e);
@@ -424,9 +437,9 @@ pub fn find_merge_candidates(
     for p in remote_files.keys() { all_paths.insert(p); }
 
     for path in all_paths {
-        let b = base_files.get(path).cloned();
-        let l = local_files.get(path).cloned();
-        let r = remote_files.get(path).cloned();
+        let b = base_files.get(path).map(|(h, _, _)| h.clone());
+        let l = local_files.get(path).map(|(h, _, _)| h.clone());
+        let r = remote_files.get(path).map(|(h, _, _)| h.clone());
         
         // Eğer üç taraftan en az ikisi farklıysa merge adayıdır
         if l != r {
@@ -437,17 +450,18 @@ pub fn find_merge_candidates(
     Ok(results)
 }
 
-fn list_files_flattened(store: &KvStore, tree_hash: &str, prefix: &str) -> Result<std::collections::HashMap<String, String>> {
+pub fn list_files_flattened(store: &KvStore, tree_hash: &str, prefix: &str) -> Result<std::collections::HashMap<String, (String, crate::core::object_model::EntryType, u32)>> {
     let mut files = std::collections::HashMap::new();
-    if let Some(json) = store.get(tree_hash.as_bytes())? {
-        let tree: Tree = serde_json::from_slice(&json)?;
+    if let Some(bin) = store.get(tree_hash.as_bytes())? {
+        let decompressed = crate::storage::compression::decompress(&bin)?;
+        let tree: Tree = bincode::deserialize(&decompressed)?;
         for entry in tree.entries {
             let full_path = if prefix.is_empty() { entry.name.clone() } else { format!("{}/{}", prefix, entry.name) };
-            if entry.is_dir {
+            if entry.entry_type == crate::core::object_model::EntryType::Tree {
                 let sub_files = list_files_flattened(store, &entry.hash, &full_path)?;
                 files.extend(sub_files);
             } else {
-                files.insert(full_path, entry.hash);
+                files.insert(full_path, (entry.hash, entry.entry_type, entry.delta_depth));
             }
         }
     }

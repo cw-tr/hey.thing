@@ -17,10 +17,6 @@ impl VerbPlugin for InitVerb {
         "init"
     }
 
-    fn aliases(&self) -> &[&str] {
-        &[]
-    }
-
     fn help(&self) -> &str {
         "Yeni bir .something reposu oluşturur"
     }

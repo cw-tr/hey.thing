@@ -50,7 +50,7 @@ impl LangPlugin for WasmLangPlugin {
         self.extensions.clone()
     }
     
-    fn merge(&self, base: &str, local: &str, remote: &str) -> Result<String> {
+    fn merge(&self, base: &str, local: &str, remote: &str) -> Result<crate::core::ast_plugin::MergeResult> {
         let wasi = WasiCtxBuilder::new().inherit_stdout().inherit_stderr().build_p1();
         let mut store = Store::new(&self.engine, HostState { wasi });
         
@@ -86,7 +86,8 @@ impl LangPlugin for WasmLangPlugin {
             remote_ptr, remote.len() as u32
         ))?;
 
-        if status != 0 {
+        // status < 0 -> Hata
+        if status < 0 {
             return Err(anyhow!("Plugin merge failed with status {}", status));
         }
 
@@ -98,11 +99,14 @@ impl LangPlugin for WasmLangPlugin {
         memory.read(&mut store, result_ptr as usize, &mut result_buf)?;
         let result = String::from_utf8(result_buf)?;
 
-        // 4. Temizlik (Wasm örneği zaten düşecek ama bellek sızıntısını önlemek için deallocate çağrılır)
+        // 4. Temizlik
         let _ = deallocate.call(&mut store, (base_ptr, base.len() as u32));
         let _ = deallocate.call(&mut store, (local_ptr, local.len() as u32));
         let _ = deallocate.call(&mut store, (remote_ptr, remote.len() as u32));
 
-        Ok(result)
+        Ok(crate::core::ast_plugin::MergeResult {
+            content: result,
+            has_conflict: status == 1,
+        })
     }
 }

@@ -38,6 +38,12 @@ fn main() {
     registry.register(Box::new(cmd::get::GetVerb::new()));
     registry.register(Box::new(cmd::lang::LangVerb::new()));
     registry.register(Box::new(cmd::verb::VerbVerb::new()));
+    registry.register(Box::new(cmd::lock::LockVerb));
+    registry.register(Box::new(cmd::lock::UnlockVerb));
+    registry.register(Box::new(cmd::verify::VerifyVerb));
+    registry.register(Box::new(cmd::sweep::SweepVerb));
+    registry.register(Box::new(cmd::hydrate::HydrateVerb::new()));
+    registry.register(Box::new(cmd::merge::MergeVerb::new()));
 
     // Eklentileri yükle
     let verb_paths = hey_thing::plugins::get_plugin_search_paths("verbs");

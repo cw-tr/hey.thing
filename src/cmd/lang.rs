@@ -17,10 +17,6 @@ impl VerbPlugin for LangVerb {
         "lang"
     }
 
-    fn aliases(&self) -> &[&str] {
-        &[]
-    }
-
     fn help(&self) -> &str {
         "Dil eklentilerini (AST Merge) yönetir: add, list, remove"
     }

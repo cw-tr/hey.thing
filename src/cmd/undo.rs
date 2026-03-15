@@ -17,10 +17,6 @@ impl VerbPlugin for UndoVerb {
         "undo"
     }
 
-    fn aliases(&self) -> &[&str] {
-        &[]
-    }
-
     fn help(&self) -> &str {
         "Son işlemi geri alır"
     }
@@ -45,7 +41,9 @@ impl VerbPlugin for UndoVerb {
         let commit_data = store
             .get(commit_hash.as_bytes())?
             .ok_or_else(|| anyhow!("Commit bulunamadı: {}", commit_hash))?;
-        let commit: Commit = serde_json::from_slice(&commit_data)?;
+        
+        let decompressed = crate::storage::compression::decompress(&commit_data)?;
+        let commit: Commit = bincode::deserialize(&decompressed)?;
 
         if let Some(parent_id) = commit.parent_id {
             // Shift verb'ine benzer mantıkla parent'a geç

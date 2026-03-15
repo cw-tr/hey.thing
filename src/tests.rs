@@ -20,8 +20,8 @@ mod tests {
             timestamp: 123456789,
             message: "Test commit".to_string(),
         };
-        let json = serde_json::to_vec(&commit).unwrap();
-        let hash = hash_data(&json);
+        let bincode_data = bincode::serialize(&commit).unwrap();
+        let hash = hash_data(&bincode_data);
         assert!(commit.verify_integrity(&hash));
     }
 }
